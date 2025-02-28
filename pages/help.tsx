@@ -26,7 +26,7 @@ export default function Help() {
     return (
 
      <div> Help page: {name}
-     <Image src="/file.svg" width={50} height = {50}/>
+     <Image src="/file.svg" width={50} height = {50} alt = ""/>
      </div>
     );
   }
