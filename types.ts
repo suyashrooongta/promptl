@@ -3,7 +3,6 @@ export interface GameState {
   tabooWord: string;
   solvedWords: string[];
   prompts: string[];
-  // elapsedTime: number;
   isGameOver: boolean;
   isEasyMode: boolean;
   isPaused: boolean;
@@ -12,7 +11,7 @@ export interface GameState {
   matchedWords: { [key: string]: string[] };
   bonusPoints: { [key: string]: number };
   tabooHit: { [key: string]: boolean };
-  // lastUpdated: number;
+  lastUpdated: number;
 }
 
 export interface PlayerStats {
@@ -22,8 +21,6 @@ export interface PlayerStats {
   currentStreak: number;
   maxStreak: number;
   lastPlayedDate: string;
-  averagePromptsUsed: number;
-  averageTimeUsed: number;
   totalTimeUsed: number;
   totalPromptsUsed: number;
 }

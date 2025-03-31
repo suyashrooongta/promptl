@@ -1,49 +1,58 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { GAME_DURATION_CONSTANT } from '../utils';
+import React, { useEffect, useState } from "react";
+import { GAME_DURATION_CONSTANT, loadGameState } from "../utils";
+
+const TIME_LEFT_KEY = "promptl_time_left";
 
 interface TimerProps {
-  elapsedTime: number;
-  onTimeUpdate: (time: number) => void;
-  onTimeUp: () => void;
   isPaused: boolean;
+  onTimeUp: () => void;
 }
 
-export function Timer({ elapsedTime, onTimeUpdate, onTimeUp, isPaused }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION_CONSTANT - elapsedTime);
-  const lastTickRef = useRef<number>(Date.now());
-  
+export function Timer({ isPaused, onTimeUp }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const savedState = loadGameState();
+    if (savedState) {
+      const savedTimeLeft = localStorage.getItem(TIME_LEFT_KEY);
+      return savedTimeLeft
+        ? parseInt(savedTimeLeft, 10)
+        : GAME_DURATION_CONSTANT;
+    }
+    return GAME_DURATION_CONSTANT;
+  });
+
   useEffect(() => {
-    if (isPaused) {
-      lastTickRef.current = Date.now();
-      return;
+    let intervalId: number;
+
+    if (!isPaused) {
+      intervalId = window.setInterval(() => {
+        setTimeLeft((prev) => {
+          const remaining = prev - 1000;
+
+          if (remaining <= 0) {
+            clearInterval(intervalId);
+            onTimeUp();
+          }
+
+          const updatedTime = Math.max(0, remaining);
+          localStorage.setItem(TIME_LEFT_KEY, updatedTime.toString());
+          return updatedTime;
+        });
+      }, 1000);
     }
 
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const delta = now - lastTickRef.current;
-      lastTickRef.current = now;
-
-      const newElapsedTime = elapsedTime + delta;
-      onTimeUpdate(newElapsedTime);
-      
-      const remaining = Math.max(0, GAME_DURATION_CONSTANT - newElapsedTime);
-      setTimeLeft(remaining);
-      
-      if (remaining === 0) {
-        onTimeUp();
-        clearInterval(interval);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
       }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [elapsedTime, onTimeUp, isPaused, onTimeUpdate]);
+    };
+  }, [isPaused, onTimeUp]);
 
   const minutes = Math.floor(timeLeft / 60000);
   const seconds = Math.floor((timeLeft % 60000) / 1000);
 
   return (
     <div className="text-2xl font-mono font-bold">
-      {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
     </div>
   );
 }

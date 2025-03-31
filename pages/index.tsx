@@ -1,21 +1,26 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-import React, { useState, useEffect, useRef } from 'react';
-import { Stats } from '../components/Stats';
-import { HowToPlay } from '../components/HowToPlay';
-import { AIResponse } from '../components/AIResponse';
-import { GameState } from '../types';
-import { 
-  getGameData, 
-  calculateScore, 
-  getStats, 
+import React, { useState, useEffect, useRef } from "react";
+import { Stats } from "../components/Stats";
+import { HowToPlay } from "../components/HowToPlay";
+import { AIResponse } from "../components/AIResponse";
+import { GameState } from "../types";
+import { Timer } from "../components/Timer";
+
+import {
+  getGameData,
+  calculateScore,
+  getStats,
   updateStats,
   MAX_PROMPTS_CONSTANT,
   isValidWord,
   isDerivative,
-  checkAIResponse
-} from '../utils';
-import { HelpCircle, BarChart2, Send } from 'lucide-react';
+  checkAIResponse,
+  loadGameState,
+  saveGameState,
+  initializeWordSets,
+} from "../utils";
+import { HelpCircle, BarChart2, Send } from "lucide-react";
+
+const TIME_LEFT_KEY = "promptl_time_left";
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -24,7 +29,6 @@ export default function Home() {
       ...data,
       solvedWords: [],
       prompts: [],
-      startTime: Date.now(),
       isGameOver: false,
       isEasyMode: true,
       isPaused: false,
@@ -33,10 +37,11 @@ export default function Home() {
       matchedWords: {},
       bonusPoints: {},
       tabooHit: {},
+      lastUpdated: Date.now(),
     };
   });
 
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
   const [showStats, setShowStats] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAIResponse, setShowAIResponse] = useState(false);
@@ -45,24 +50,52 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isClient, setIsClient] = useState(false); // Track client-side rendering
 
   useEffect(() => {
-    if (inputRef.current && !gameState.isGameOver && !showAIResponse && !showStats && !showHowTo) {
+    setIsClient(true); // Set to true on client-side
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const savedState = loadGameState();
+      if (savedState) {
+        console.log("Loaded saved game state:", savedState);
+        setGameState(savedState);
+        if (savedState.isGameOver) {
+          setShowStats(true);
+        }
+      }
+    }
+  }, [isClient]);
+
+  useEffect(() => {
+    const activeGameScreen = !(
+      gameState.isGameOver ||
+      showAIResponse ||
+      showStats ||
+      showHowTo
+    );
+    if (inputRef.current && activeGameScreen) {
       inputRef.current.focus();
     }
+    setGameState((prev) => ({
+      ...prev,
+      isPaused:
+        gameState.isGameOver || showAIResponse || showStats || showHowTo,
+    }));
   }, [gameState.isGameOver, showAIResponse, showStats, showHowTo]);
 
+  // Save game state whenever it changes
   useEffect(() => {
-    setGameState(prev => ({
-      ...prev,
-      isPaused: showAIResponse || showStats || showHowTo
-    }));
-  }, [showAIResponse, showStats, showHowTo]);
+    if (!isClient) return; // Only save on client-side
+    saveGameState(gameState); // Update timeLeft when saving
+  }, [gameState]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!prompt.trim() || gameState.prompts.length >= MAX_PROMPTS_CONSTANT) {
       return;
     }
@@ -71,32 +104,42 @@ export default function Home() {
 
     // Validate word
     if (!isValidWord(word)) {
-      setError('Please enter a valid English word');
+      setError("Please enter a valid English word");
       return;
     }
 
     // Check for derivatives
     if (isDerivative(word, gameState.targetWords)) {
-      setError('Word cannot be a derivative of target words');
+      setError("Word cannot be a derivative of target words");
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await checkAIResponse(word, gameState.targetWords, gameState.tabooWord, gameState.solvedWords, gameState.isEasyMode);
-      
-      const newSolvedWords = [...new Set([...gameState.solvedWords, ...result.matchedWords])];
-      const isGameWon = newSolvedWords.length === gameState.targetWords.length;
-      const isGameLost = gameState.prompts.length + 1 >= MAX_PROMPTS_CONSTANT;
-      
-      setGameState(prev => {
+      const result = await checkAIResponse(
+        word,
+        gameState.targetWords,
+        gameState.tabooWord,
+        gameState.solvedWords,
+        gameState.isEasyMode
+      );
 
-        const newScore = calculateScore(
-          [...prev.prompts, word],
-          { ...prev.tabooHit, [word]: result.tabooHit },
-          { ...prev.matchedWords, [word]: result.matchedWords },
-          { ...prev.bonusPoints, [word]: result.bonusPoints }
-        );
+      const newSolvedWords = [
+        ...new Set([...gameState.solvedWords, ...result.matchedWords]),
+      ];
+      const isGameWon = newSolvedWords.length === gameState.targetWords.length;
+      const isGameLost =
+        !isGameWon && gameState.prompts.length + 1 >= MAX_PROMPTS_CONSTANT;
+
+      setGameState((prev) => {
+        const newScore = isGameLost
+          ? 0
+          : calculateScore(
+              [...prev.prompts, word],
+              { ...prev.tabooHit, [word]: result.tabooHit },
+              { ...prev.matchedWords, [word]: result.matchedWords },
+              { ...prev.bonusPoints, [word]: result.bonusPoints }
+            );
 
         if (isGameWon || isGameLost) {
           updateStats(isGameWon, newScore, prev.prompts.length + 1);
@@ -111,16 +154,16 @@ export default function Home() {
           aiResponses: { ...prev.aiResponses, [word]: result.response },
           matchedWords: { ...prev.matchedWords, [word]: result.matchedWords },
           bonusPoints: { ...prev.bonusPoints, [word]: result.bonusPoints },
-          tabooHit: { ...prev.tabooHit, [word]: result.tabooHit }
+          tabooHit: { ...prev.tabooHit, [word]: result.tabooHit },
         };
       });
 
       setSelectedPrompt(word);
       setShowStats(isGameLost || isGameWon);
       setShowAIResponse(!(isGameLost || isGameWon));
-      setPrompt('');
+      setPrompt("");
     } catch (err) {
-      setError('Failed to check response. Please try again.' + err);
+      setError("Failed to check response. Please try again." + err);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +178,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto mb-8">
         <header className="flex justify-between items-center mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
             Promptl
@@ -158,47 +201,72 @@ export default function Home() {
           </div>
         </header>
 
+        {gameState.isGameOver && (
+          <div className="flex justify-center mb-6 h-10">
+            <button
+              onClick={() => setShowStats(true)}
+              className="px-3 py-1 text-xs font-semibold rounded-md bg-gray-700 text-white hover:bg-gray-800 transition-all"
+            >
+              Show Result
+            </button>
+          </div>
+        )}
+
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 mb-6">
           <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white">
             <div className="space-y-2">
               <div className="text-lg font-semibold">
-                {promptsRemaining} prompts remaining | Max Score: {gameState.score}
+                {promptsRemaining} prompts left | Score: {gameState.score}
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id="easyMode"
-                  checked={gameState.isEasyMode}
-                  onChange={(e) => setGameState(prev => ({ ...prev, isEasyMode: e.target.checked }))}
+                  id="hardMode"
+                  checked={!gameState.isEasyMode}
+                  disabled={gameState.isGameOver || isLoading}
+                  onChange={(e) =>
+                    setGameState((prev) => ({
+                      ...prev,
+                      isEasyMode: !e.target.checked,
+                    }))
+                  }
                   className="rounded border-white/20"
                 />
-                <label htmlFor="easyMode" className="text-sm">Easy Mode</label>
+                <label htmlFor="hardMode" className="text-sm">
+                  Hard Mode
+                </label>
               </div>
             </div>
-            {/* <Timer 
-              startTime={gameState.startTime}
-              isPaused={gameState.isPaused}
-              onTimeUp={() => {
-                if (!gameState.isGameOver) {
-                  const timeUsed = Date.now() - gameState.startTime;
-                  setGameState(prev => ({ ...prev, isGameOver: true }));
-                  updateStats(false, gameState.score, gameState.prompts.length, timeUsed);
-                  setShowStats(true);
-                }
-              }}
-            /> */}
+            {isClient && (
+              <Timer
+                isPaused={gameState.isPaused}
+                onTimeUp={() => {
+                  if (!gameState.isGameOver) {
+                    setGameState((prev) => ({
+                      ...prev,
+                      isGameOver: true,
+                      score: 0,
+                    }));
+                    updateStats(false, 0, gameState.prompts.length);
+                    setShowStats(true);
+                  }
+                }}
+              />
+            )}
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-3 text-gray-800">Target Words:</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800">
+              Target Words:
+            </h2>
             <div className="flex flex-wrap gap-3">
-              {gameState.targetWords.map(word => (
+              {gameState.targetWords.map((word) => (
                 <span
                   key={word}
                   className={`px-4 py-2 rounded-xl font-medium transition-all transform hover:scale-105 ${
                     gameState.solvedWords.includes(word)
-                      ? 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md'
-                      : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow'
+                      ? "bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md"
+                      : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow"
                   }`}
                 >
                   {word}
@@ -208,7 +276,9 @@ export default function Home() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-3 text-gray-800">Taboo Word:</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800">
+              Taboo Word:
+            </h2>
             <span className="px-4 py-2 rounded-xl font-medium bg-gradient-to-r from-red-400 to-red-500 text-white shadow-md">
               {gameState.tabooWord}
             </span>
@@ -216,9 +286,7 @@ export default function Home() {
 
           <form onSubmit={handleSubmit} className="mb-8">
             <div className="space-y-3">
-              <div className="text-gray-1200 font-large">
-                Describe
-              </div>
+              <div className="text-gray-1200 font-large">Describe</div>
               <div className="flex gap-2 sm:gap-2">
                 <input
                   ref={inputRef}
@@ -234,13 +302,10 @@ export default function Home() {
                   className="flex-shrink-0 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2 shadow-md"
                   disabled={!prompt.trim() || gameState.isGameOver || isLoading}
                 >
-                  <span>{isLoading ? 'Checking...' : ''}</span>
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-              {error && (
-                <div className="text-red-500 text-sm">{error}</div>
-              )}
+              {error && <div className="text-red-500 text-sm">{error}</div>}
             </div>
           </form>
 
@@ -251,9 +316,10 @@ export default function Home() {
                 onClick={() => handlePromptClick(p)}
                 className={`px-4 py-2 rounded-xl transition-all hover:scale-105 ${
                   gameState.matchedWords[p]?.length > 0
-                    ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800'
-                    : gameState.tabooHit[p] ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800'
-                    : 'bg-black-200 text-gray-800'
+                    ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800"
+                    : gameState.tabooHit[p]
+                    ? "bg-gradient-to-r from-red-100 to-red-200 text-red-800"
+                    : "bg-black-200 text-gray-800"
                 }`}
               >
                 {p}
@@ -273,20 +339,17 @@ export default function Home() {
         </div>
       </div>
 
-      {(showStats) && (
-        <Stats 
-          stats={getStats()} 
+      {showStats && (
+        <Stats
+          stats={getStats()}
           onClose={() => {
             setShowStats(false);
           }}
           gameState={gameState}
-          finalScore={gameState.score}
         />
       )}
-      
-      {showHowTo && (
-        <HowToPlay onClose={() => setShowHowTo(false)} />
-      )}
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
 
       {!showStats && showAIResponse && selectedPrompt && (
         <AIResponse

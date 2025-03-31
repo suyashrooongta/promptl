@@ -1,5 +1,5 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React from "react";
+import { X } from "lucide-react";
 
 interface HowToPlayProps {
   onClose: () => void;
@@ -21,14 +21,14 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
             </button>
           </div>
         </div>
-        
-        <div className="p-6">
+
+        <div className="p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
           <div className="space-y-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
-              In Promptl, come up with prompts for AI, to make it say specific target words
-              while avoiding a taboo word.
+              In Promptl, come up with prompts for AI, to make it say specific
+              target words while avoiding a taboo word.
             </p>
-            
+
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-gray-800">Rules:</h3>
               <ul className="space-y-2 text-gray-700">
@@ -50,11 +50,11 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  You have 10 prompts to win
+                  You have 10 prompts and 10 minutes to win
                 </li>
               </ul>
             </div>
-            
+
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-gray-800">Scoring:</h3>
               <ul className="space-y-2 text-gray-700">
@@ -68,7 +68,8 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  -10 points for each wasted prompt, i.e., without a target word hit
+                  -10 points for each wasted prompt, i.e., without a target word
+                  hit
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
@@ -78,14 +79,17 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-800">Easy Mode:</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Hard Mode:
+              </h3>
               <p className="text-gray-700">
-                When enabled, word matching is more lenient and includes word variations
-                (e.g., "running" matches "run").
+                In normal mode, word matching is lenient and includes word
+                variations (e.g., "running" matches "run"). In hard mode, only
+                exact matches are accepted.
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={onClose}
             className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 font-medium"
