@@ -53,7 +53,7 @@ export function AIResponse({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full relative overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full relative overflow-hidden h-[80%]">
         <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">AI Response</h2>
@@ -67,7 +67,7 @@ export function AIResponse({
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6  overflow-y-auto h-[80%]">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Your Prompt:

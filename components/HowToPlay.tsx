@@ -8,7 +8,7 @@ interface HowToPlayProps {
 export function HowToPlay({ onClose }: HowToPlayProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden h-[80%]">
         <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">How to Play</h2>
@@ -22,7 +22,7 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
           </div>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <div className="p-6 overflow-y-auto h-[80%]">
           <div className="space-y-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
               In Promptl, come up with prompts for AI, to make it say specific

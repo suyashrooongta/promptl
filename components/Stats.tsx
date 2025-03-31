@@ -31,7 +31,7 @@ export function Stats({ stats, onClose, gameState }: StatsProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden h-[80%]">
         <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-white">
@@ -47,7 +47,7 @@ export function Stats({ stats, onClose, gameState }: StatsProps) {
           </div>
         </div>
 
-        <div className="p-4 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <div className="p-4 overflow-y-auto h-[80%]">
           {gameState?.isGameOver && (
             <div className="mb-6 text-center">
               {gameState.solvedWords.length === gameState.targetWords.length ? (
