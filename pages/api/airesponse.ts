@@ -36,7 +36,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
 
     const aiResponse = response.choices[0].message.content || "";
     // Save the response to the database
-    prisma.aiResponse.create({
+    await prisma.aiResponse.create({
       data: {
         prompt: prompt,
         response: aiResponse,
