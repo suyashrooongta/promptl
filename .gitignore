@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+*.js
+printWordSets.ts
+printWordSets.js
 
 # debug
 npm-debug.log*

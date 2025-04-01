@@ -45,6 +45,7 @@ export function getGameData(date: Date): GameData {
     let index;
     do {
       index = hash(seed, i) % allTargetWords.length;
+      // Ensure the index is unique
     } while (used.has(index));
     used.add(index);
     targetWords.push(allTargetWords[index]);
@@ -183,9 +184,6 @@ export function checkWordMatch(
   isEasyMode: boolean
 ): boolean {
   const cleanWord = word.toLowerCase().replace(/[.,:\*!?]/g, "");
-  if (cleanWord.includes("ham")) {
-    console.log(cleanWord);
-  }
   const cleanTarget = target.toLowerCase();
 
   if (isEasyMode) {
@@ -280,17 +278,131 @@ export async function checkAIResponse(
 // Initialize word sets for multiple days
 export function initializeWordSets() {
   const wordSets = {
-    "2024-03-15": {
-      targetWords: ["ocean", "mountain", "forest", "desert", "valley"],
-      tabooWord: "landscape",
+    "2025-04-01": {
+      targetWords: ["nation", "document", "basketball", "law", "choice"],
+      tabooWord: "round",
     },
-    "2024-03-16": {
-      targetWords: ["piano", "guitar", "violin", "drums", "flute"],
-      tabooWord: "instrument",
+    "2025-04-02": {
+      targetWords: ["library", "code", "mouse", "direction", "king"],
+      tabooWord: "baby",
     },
-    "2024-03-17": {
-      targetWords: ["pizza", "pasta", "bread", "cheese", "sauce"],
-      tabooWord: "food",
+    "2025-04-03": {
+      targetWords: ["door", "planet", "finger", "moon", "desert"],
+      tabooWord: "church",
+    },
+    "2025-04-04": {
+      targetWords: ["wall", "music", "phone", "fear", "child"],
+      tabooWord: "disease",
+    },
+    "2025-04-05": {
+      targetWords: ["plant", "value", "morning", "diamond", "partner"],
+      tabooWord: "fire",
+    },
+    "2025-04-06": {
+      targetWords: ["baby", "piano", "feeling", "town", "metal"],
+      tabooWord: "head",
+    },
+    "2025-04-07": {
+      targetWords: ["church", "venus", "hair", "artist", "past"],
+      tabooWord: "fall",
+    },
+    "2025-04-08": {
+      targetWords: ["brother", "luck", "second", "holiday", "part"],
+      tabooWord: "root",
+    },
+    "2025-04-09": {
+      targetWords: ["novel", "bomb", "light", "river", "science"],
+      tabooWord: "space",
+    },
+    "2025-04-10": {
+      targetWords: ["relative", "country", "ship", "hour", "blue"],
+      tabooWord: "princess",
+    },
+    "2025-04-11": {
+      targetWords: ["palm", "breakfast", "question", "future", "winter"],
+      tabooWord: "smell",
+    },
+    "2025-04-12": {
+      targetWords: ["cap", "ghost", "writer", "novel", "bitter"],
+      tabooWord: "red",
+    },
+    "2025-04-13": {
+      targetWords: ["gold", "air", "book", "teacher", "luck"],
+      tabooWord: "oval",
+    },
+    "2025-04-14": {
+      targetWords: ["number", "sweet", "lion", "weather", "scientist"],
+      tabooWord: "education",
+    },
+    "2025-04-15": {
+      targetWords: ["team", "lunch", "server", "home", "student"],
+      tabooWord: "winter",
+    },
+    "2025-04-16": {
+      targetWords: ["writer", "shoe", "house", "profit", "cold"],
+      tabooWord: "sun",
+    },
+    "2025-04-17": {
+      targetWords: ["industry", "teacher", "rain", "computer", "holiday"],
+      tabooWord: "second",
+    },
+    "2025-04-18": {
+      targetWords: [
+        "communication",
+        "history",
+        "battery",
+        "business",
+        "rectangle",
+      ],
+      tabooWord: "day",
+    },
+    "2025-04-19": {
+      targetWords: ["hospital", "bitter", "result", "saturn", "africa"],
+      tabooWord: "cat",
+    },
+    "2025-04-20": {
+      targetWords: ["diamond", "asia", "jupiter", "cat", "goal"],
+      tabooWord: "toe",
+    },
+    "2025-04-21": {
+      targetWords: ["china", "metal", "day", "instrument", "business"],
+      tabooWord: "apple",
+    },
+    "2025-04-22": {
+      targetWords: ["hair", "artist", "past", "fall", "time"],
+      tabooWord: "venus",
+    },
+    "2025-04-23": {
+      targetWords: ["knight", "child", "train", "grass", "antarctica"],
+      tabooWord: "parent",
+    },
+    "2025-04-24": {
+      targetWords: ["fire", "value", "diamond", "sour", "fabric"],
+      tabooWord: "morning",
+    },
+    "2025-04-25": {
+      targetWords: ["baby", "feeling", "town", "government", "day"],
+      tabooWord: "piano",
+    },
+    "2025-04-26": {
+      targetWords: ["stomach", "finger", "church", "moon", "artist"],
+      tabooWord: "desert",
+    },
+    "2025-04-27": {
+      targetWords: ["music", "disease", "spring", "child", "mercury"],
+      tabooWord: "fear",
+    },
+    "2025-04-28": {
+      targetWords: ["basketball", "law", "choice", "value", "guitar"],
+      tabooWord: "document",
+    },
+    "2025-04-29": {
+      targetWords: ["code", "mouse", "direction", "baby", "king"],
+      tabooWord: "change",
+    },
+    "2025-04-30": {
+      targetWords: ["morning", "partner", "tennis", "relative", "world"],
+      tabooWord: "park",
     },
   };
 
@@ -306,11 +418,11 @@ function yesterday(dateString: string): string {
 }
 
 function hashCode(str: string): number {
-  let hash = 0;
+  let hash = 2166136261; // FNV-1a hash starting value
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
+    hash ^= char;
+    hash = Math.imul(hash, 16777619); // FNV prime
   }
   return Math.abs(hash);
 }

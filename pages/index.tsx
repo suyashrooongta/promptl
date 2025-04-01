@@ -20,7 +20,6 @@ import {
   initializeWordSets,
 } from "../utils";
 import { HelpCircle, BarChart2, Send } from "lucide-react";
-import { set } from "date-fns";
 
 enum GameStatus {
   GAME_NOT_STARTED = "GAME_NOT_STARTED",
@@ -69,6 +68,7 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true); // Set to true on client-side
+    initializeWordSets();
   }, []);
 
   useEffect(() => {
@@ -76,7 +76,6 @@ export default function Home() {
       const savedState = loadGameState();
       let gameOver = false;
       if (savedState) {
-        console.log("Loaded saved game state:", savedState);
         setGameState(savedState);
         if (savedState.isGameOver) {
           gameOver = true;

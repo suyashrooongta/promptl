@@ -248,7 +248,7 @@ export const allTargetWords = [
   "science",
   "scientist",
   "sea",
-  "seasons",
+  "season",
   "second",
   "server",
   "shadow",
