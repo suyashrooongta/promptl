@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 
-export async function callOpenAI(prompt: string): Promise<string> {
+export async function fetchAIResponse(prompt: string): Promise<string> {
   try {
     const existingResponse = await prisma.aiResponse.findUnique({
       where: {
@@ -20,6 +20,8 @@ export async function callOpenAI(prompt: string): Promise<string> {
     if (existingResponse) {
       return existingResponse.response;
     }
+
+    console.error("Calling OpenAI:");
     // If the response is not in the database, call OpenAI API
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -56,6 +58,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const response = await callOpenAI(req.query.prompt as string);
+  const response = await fetchAIResponse(req.query.prompt as string);
   res.status(200).json({ response });
 }
