@@ -27,14 +27,14 @@ interface DailyWords {
 
 export function getGameData(date: Date): GameData {
   const dateString = format(date, "yyyy-MM-dd");
-  const savedWords: DailyWords = JSON.parse(
-    localStore?.getItem(WORDS_KEY) || "{}"
-  );
+  const savedWords = manualWordSets();
+
+  console.log("Saved words:", savedWords);
 
   if (savedWords[dateString]) {
     return savedWords[dateString];
   }
-
+  console.log("No saved words for this date, generating new ones.");
   // Fall back to random selection
   const seed = hashCode(dateString);
 
@@ -275,11 +275,10 @@ export async function checkAIResponse(
   }
 }
 
-// Initialize word sets for multiple days
-export function initializeWordSets() {
+function manualWordSets(): { [date: string]: GameData } {
   const wordSets = {
     "2025-04-01": {
-      targetWords: ["nation", "document", "basketball", "law", "choice"],
+      targetWords: ["nation", "document", "cricket", "law", "choice"],
       tabooWord: "round",
     },
     "2025-04-02": {
@@ -406,9 +405,7 @@ export function initializeWordSets() {
     },
   };
 
-  const savedWords = JSON.parse(localStorage.getItem(WORDS_KEY) || "{}");
-  const updatedWords = { ...savedWords, ...wordSets };
-  localStorage.setItem(WORDS_KEY, JSON.stringify(updatedWords));
+  return wordSets;
 }
 
 function yesterday(dateString: string): string {

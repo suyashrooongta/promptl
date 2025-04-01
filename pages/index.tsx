@@ -17,7 +17,6 @@ import {
   checkAIResponse,
   loadGameState,
   saveGameState,
-  initializeWordSets,
 } from "../utils";
 import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
@@ -68,7 +67,6 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true); // Set to true on client-side
-    initializeWordSets();
   }, []);
 
   useEffect(() => {
