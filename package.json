@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "devDataGen": "ts-node printWordSets.ts"
+    "devDataGen": "npx tsx printWordSets.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

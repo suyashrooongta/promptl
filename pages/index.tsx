@@ -19,7 +19,7 @@ import {
   saveGameState,
   initializeWordSets,
 } from "../utils";
-import { HelpCircle, BarChart2, Send } from "lucide-react";
+import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
 enum GameStatus {
   GAME_NOT_STARTED = "GAME_NOT_STARTED",
@@ -386,7 +386,7 @@ export default function Home() {
                   disabled={!prompt.trim() || gameState.isGameOver || isLoading}
                 >
                   {isLoading ? (
-                    "Checking..."
+                    <LoaderCircle className="animate-spin w-4 h-4" />
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
