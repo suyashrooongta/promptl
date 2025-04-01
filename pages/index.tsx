@@ -379,7 +379,7 @@ export default function Home() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="prompt word"
-                  className="flex-1 px-4 py-3 border-2 border-indigo-100 rounded-xl focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="flex-1 px-4 py-3 border-2 border-indigo-100 rounded-xl text-gray-800 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 transition-all"
                   disabled={gameState.isGameOver || isLoading}
                 />
                 <button
