@@ -1,5 +1,5 @@
 import { GameData, PlayerStats, AIResponse, GameState } from "./types";
-import { allTargetWords, allTabooWords } from "./data/words";
+import { allTargetWords } from "./data/words";
 // @ts-ignore
 import wordList from "word-list-json";
 // @ts-ignore
@@ -41,20 +41,22 @@ export function getGameData(date: Date): GameData {
   const targetWords = [];
   const used = new Set<number>();
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     let index;
     do {
-      index = Math.abs((seed + i * 31) % allTargetWords.length);
+      index = hash(seed, i) % allTargetWords.length;
     } while (used.has(index));
     used.add(index);
     targetWords.push(allTargetWords[index]);
   }
 
-  const tabooIndex = Math.abs(seed % allTabooWords.length);
+  // Use one of the selected words as the taboo word
+  const tabooIndex = Math.abs(seed % targetWords.length);
+  const tabooWord = targetWords.splice(tabooIndex, 1)[0];
 
   return {
     targetWords,
-    tabooWord: allTabooWords[tabooIndex],
+    tabooWord,
   };
 }
 
@@ -311,6 +313,10 @@ function hashCode(str: string): number {
     hash = hash & hash;
   }
   return Math.abs(hash);
+}
+
+function hash(seed: number, i: number): number {
+  return Math.abs(((seed + i) * 2654435761) % 2 ** 32); // Knuth's multiplicative hash
 }
 
 export const MAX_PROMPTS_CONSTANT = MAX_PROMPTS;

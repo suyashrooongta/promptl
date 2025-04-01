@@ -144,6 +144,12 @@ export default function Home() {
 
     const word = prompt.trim().toLowerCase();
 
+    // Check if the word has already been tried
+    if (gameState.prompts.includes(word)) {
+      setError("This prompt has already been tried");
+      return;
+    }
+
     // Validate word
     if (!isValidWord(word)) {
       setError("Please enter a valid English word");

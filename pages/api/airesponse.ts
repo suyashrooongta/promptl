@@ -21,18 +21,17 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
       return existingResponse.response;
     }
 
-    console.error("Calling OpenAI:");
     // If the response is not in the database, call OpenAI API
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
-          content: `Describe ${prompt}`,
+          content: `Describe ${prompt} in 200 words or less`,
         },
       ],
       temperature: 0,
-      max_tokens: 150,
+      max_tokens: 300,
     });
 
     const aiResponse = response.choices[0].message.content || "";
