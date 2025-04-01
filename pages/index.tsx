@@ -369,7 +369,9 @@ export default function Home() {
 
           <form onSubmit={handleSubmit} className="mb-8">
             <div className="space-y-3">
-              <div className="text-gray-1200 font-large">Describe</div>
+              <div className="text-gray-800 font-semibold font-large">
+                Describe
+              </div>
               <div className="flex gap-2 sm:gap-2">
                 <input
                   ref={inputRef}
