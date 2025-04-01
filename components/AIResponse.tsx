@@ -1,5 +1,7 @@
 import { X } from "lucide-react";
 import { checkWordMatch } from "../utils";
+import { marked } from "marked";
+import { useState } from "react";
 
 interface AIResponseProps {
   prompt: string;
@@ -22,34 +24,47 @@ export function AIResponse({
   isEasyMode,
   onClose,
 }: AIResponseProps) {
-  // Split response into words and highlight matches
-  const words = response.split(/(\s+)/);
-  // console.log(prompt + response + tabooWord);
-  // console.log(tabooHit);
-  const highlightedResponse = words.map((word, index) => {
-    if (word.trim() === "") return word;
+  const [loading, setLoading] = useState(false);
 
-    const cleanWord = word.replace(/[.,!?]/g, "");
-    if (checkWordMatch(cleanWord, tabooWord, false)) {
-      return (
-        <span key={index} className="bg-red-200 px-1 rounded">
-          {word}
-        </span>
-      );
-    }
-    if (
-      matchedWords.some((target) =>
-        checkWordMatch(cleanWord, target, isEasyMode)
-      )
-    ) {
-      return (
-        <span key={index} className="bg-green-200 px-1 rounded">
-          {word}
-        </span>
-      );
-    }
-    return word;
-  });
+  const handleClose = () => {
+    setLoading(true);
+    onClose();
+  };
+
+  // Split response into words and highlight matches
+
+  const highlightMarkdown = (markdown: string) => {
+    let processedMarkdown = markdown;
+
+    const markdownwords = markdown.split(/(\s+)/);
+
+    const highlightedWords = markdownwords.map((word, index) => {
+      if (word.trim() === "") return word;
+
+      const cleanWord = word.replace(/[.,!?]/g, "");
+
+      if (checkWordMatch(cleanWord, tabooWord, false)) {
+        return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
+      }
+
+      if (
+        matchedWords.some((target) =>
+          checkWordMatch(cleanWord, target, isEasyMode)
+        )
+      ) {
+        return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
+      }
+
+      return word;
+    });
+    processedMarkdown = highlightedWords.join("");
+
+    return marked(processedMarkdown);
+  };
+
+  const highlightedResponse = (
+    <div dangerouslySetInnerHTML={{ __html: highlightMarkdown(response) }} />
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -58,32 +73,31 @@ export function AIResponse({
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">AI Response</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white/80 hover:text-white transition-colors"
               aria-label="Close"
+              disabled={loading}
             >
-              <X className="w-6 h-6" />
+              {loading ? "Checking..." : <X className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
         <div className="p-6 space-y-6  overflow-y-auto h-[80%]">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Your Prompt:
-            </h3>
-            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
-              Describe {prompt}
-            </p>
-          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Your Prompt:
+          </h3>
+          <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+            Describe {prompt}
+          </p>
 
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               AI Response:
             </h3>
-            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
+            <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
               {highlightedResponse}
-            </p>
+            </div>
           </div>
 
           <div className="border-t pt-4">

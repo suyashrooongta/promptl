@@ -4,6 +4,7 @@ import { HowToPlay } from "../components/HowToPlay";
 import { AIResponse } from "../components/AIResponse";
 import { GameState } from "../types";
 import { Timer } from "../components/Timer";
+import { differenceInSeconds, startOfTomorrow } from "date-fns";
 
 import {
   getGameData,
@@ -19,6 +20,13 @@ import {
   initializeWordSets,
 } from "../utils";
 import { HelpCircle, BarChart2, Send } from "lucide-react";
+import { set } from "date-fns";
+
+enum GameStatus {
+  GAME_NOT_STARTED = "GAME_NOT_STARTED",
+  GAME_IN_PROGRESS = "GAME_IN_PROGRESS",
+  GAME_OVER = "GAME_OVER",
+}
 
 const TIME_LEFT_KEY = "promptl_time_left";
 
@@ -48,6 +56,13 @@ export default function Home() {
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showStartScreen, setShowStartScreen] = useState(true); // New state for start screen
+  const [gameStatus, setGameStatus] = useState<GameStatus>(
+    GameStatus.GAME_NOT_STARTED
+  );
+  const [timeUntilNextGame, setTimeUntilNextGame] = useState<number | null>(
+    null
+  );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isClient, setIsClient] = useState(false); // Track client-side rendering
@@ -59,13 +74,19 @@ export default function Home() {
   useEffect(() => {
     if (isClient) {
       const savedState = loadGameState();
+      let gameOver = false;
       if (savedState) {
         console.log("Loaded saved game state:", savedState);
         setGameState(savedState);
         if (savedState.isGameOver) {
+          gameOver = true;
           setShowStats(true);
+          setGameStatus(GameStatus.GAME_OVER);
+        } else {
+          setGameStatus(GameStatus.GAME_IN_PROGRESS);
         }
       }
+      setShowStartScreen(true); // Always show the start screen
     }
   }, [isClient]);
 
@@ -91,6 +112,27 @@ export default function Home() {
     if (!isClient) return; // Only save on client-side
     saveGameState(gameState); // Update timeLeft when saving
   }, [gameState]);
+
+  useEffect(() => {
+    const updateTimeUntilNextGame = () => {
+      const now = new Date();
+      const nextGameTime = startOfTomorrow();
+      const secondsUntilNextGame = differenceInSeconds(nextGameTime, now);
+      setTimeUntilNextGame(secondsUntilNextGame);
+    };
+
+    updateTimeUntilNextGame();
+    const interval = setInterval(updateTimeUntilNextGame, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours}h ${minutes}m ${secs}s`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,6 +217,42 @@ export default function Home() {
   };
 
   const promptsRemaining = MAX_PROMPTS_CONSTANT - gameState.prompts.length;
+
+  if (showStartScreen) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
+            Promptl
+          </h1>
+          {isClient && (
+            <button
+              onClick={() => setShowStartScreen(false)}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-md mb-4"
+            >
+              {gameStatus === GameStatus.GAME_NOT_STARTED
+                ? "Start Game"
+                : gameStatus === GameStatus.GAME_IN_PROGRESS
+                ? "Resume Game"
+                : "View result"}
+            </button>
+          )}
+          {isClient &&
+            gameStatus === GameStatus.GAME_OVER &&
+            timeUntilNextGame !== null && (
+              <div className="text-center">
+                <p className="text-lg font-semibold text-gray-800">
+                  Next game available in:{" "}
+                  <span className="text-indigo-600">
+                    {formatTime(timeUntilNextGame)}
+                  </span>
+                </p>
+              </div>
+            )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 py-8 px-4">
@@ -302,7 +380,13 @@ export default function Home() {
                   className="flex-shrink-0 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2 shadow-md"
                   disabled={!prompt.trim() || gameState.isGameOver || isLoading}
                 >
-                  <Send className="w-4 h-4" />
+                  {isLoading ? (
+                    "Checking..."
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </div>
               {error && <div className="text-red-500 text-sm">{error}</div>}
