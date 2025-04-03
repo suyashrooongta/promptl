@@ -161,6 +161,10 @@ export default function Home() {
     }
 
     setIsLoading(true);
+    setGameState((prev) => ({
+      ...prev,
+      isPaused: true, // Pause the game when a prompt is submitted
+    }));
     try {
       const result = await checkAIResponse(
         word,
