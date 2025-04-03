@@ -160,7 +160,6 @@ export const allTargetWords = [
   "leg",
   "lemon",
   "length",
-  "library",
   "life",
   "light",
   "lion",

@@ -427,6 +427,12 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        <footer className="text-center py-4 bg-white/80 backdrop-blur-sm rounded-t-2xl shadow-lg">
+          <p className="text-sm text-gray-600">
+            © {new Date().getFullYear()} Suyash Roongta. All rights reserved.
+          </p>
+        </footer>
       </div>
 
       {showStats && (

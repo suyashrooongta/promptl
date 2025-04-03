@@ -26,6 +26,7 @@
 datagen.ts
 printWordSets.ts
 tests.ts
+validprompts.txt
 
 # debug
 npm-debug.log*

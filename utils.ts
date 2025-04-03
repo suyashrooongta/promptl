@@ -270,7 +270,9 @@ export async function checkAIResponse(
   }
 }
 
-function manualWordSets(): { [date: string]: GameData } {
+function manualWordSets(): {
+  [date: string]: { targetWords: string[]; tabooWord: string };
+} {
   const wordSets = {
     "2025-04-01": {
       targetWords: ["nation", "document", "cricket", "law", "choice"],
