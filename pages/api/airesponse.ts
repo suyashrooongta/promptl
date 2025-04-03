@@ -27,7 +27,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
       messages: [
         {
           role: "user",
-          content: `Describe ${prompt} in 200 words or less`,
+          content: `Describe ${prompt} in 100 words or less`,
         },
       ],
       temperature: 0,
