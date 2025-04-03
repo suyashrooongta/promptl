@@ -14,8 +14,6 @@ datasource db {
 }
 
 model AiResponse {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  prompt    String   @unique
-  response  String
+  prompt   String @id
+  response String
 }
