@@ -14,7 +14,7 @@ export async function processPrompts(
   baseUrl: string
 ): Promise<string> {
   const validPromptsPath = path.join(process.cwd(), "validprompts.txt");
-  const outputPath = path.join(process.cwd(), "output.txt");
+  const outputPath = "/tmp/output.txt";
 
   // Read the validprompts file
   const fileContent = fs.readFileSync(validPromptsPath, "utf-8");
