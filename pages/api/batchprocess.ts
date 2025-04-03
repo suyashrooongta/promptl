@@ -40,7 +40,9 @@ export async function processPrompts(
         `Prompt: ${prompt}\nResponse: ${aiResponse}\n\n`
       );
     } catch (error) {
-      return `Error processing prompt "${prompt}"`;
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      return `Error processing prompt "${prompt}": ${errorMessage}`;
     }
   }
 
