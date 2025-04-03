@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
-import fetch from "node-fetch";
 import axios from "axios";
 
 type Data = {
@@ -14,7 +13,6 @@ export async function processPrompts(
   baseUrl: string
 ): Promise<string> {
   const validPromptsPath = path.join(process.cwd(), "validprompts.txt");
-  const outputPath = "/tmp/output.txt";
 
   // Read the validprompts file
   const fileContent = fs.readFileSync(validPromptsPath, "utf-8");
@@ -33,12 +31,6 @@ export async function processPrompts(
           params: { prompt },
         })
         .then((res) => res.data.response as string);
-
-      // Append prompt and response to the output file
-      fs.appendFileSync(
-        outputPath,
-        `Prompt: ${prompt}\nResponse: ${aiResponse}\n\n`
-      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
