@@ -4,6 +4,8 @@ import { allTargetWords } from "./data/words";
 import wordList from "word-list-json";
 // @ts-ignore
 import stemmer from "stemmer";
+import { lemmatizer } from "lemmatizer";
+
 import { format } from "date-fns";
 import axios from "axios";
 
@@ -29,12 +31,9 @@ export function getGameData(date: Date): GameData {
   const dateString = format(date, "yyyy-MM-dd");
   const savedWords = manualWordSets();
 
-  console.log("Saved words:", savedWords);
-
   if (savedWords[dateString]) {
-    return savedWords[dateString];
+    return { ...savedWords[dateString], gameDate: dateString };
   }
-  console.log("No saved words for this date, generating new ones.");
   // Fall back to random selection
   const seed = hashCode(dateString);
 
@@ -58,6 +57,7 @@ export function getGameData(date: Date): GameData {
   return {
     targetWords,
     tabooWord,
+    gameDate: dateString, // Include gameDate
   };
 }
 
@@ -71,13 +71,7 @@ export function setGameData(date: Date, data: GameData): void {
 }
 
 export function saveGameState(state: GameState): void {
-  localStore?.setItem(
-    GAME_STATE_KEY,
-    JSON.stringify({
-      ...state,
-      lastUpdated: Date.now(),
-    })
-  );
+  localStore?.setItem(GAME_STATE_KEY, JSON.stringify(state));
 }
 
 export function loadGameState(): GameState | null {
@@ -86,9 +80,8 @@ export function loadGameState(): GameState | null {
 
   const state = JSON.parse(savedState);
   const today = format(new Date(), "yyyy-MM-dd");
-  const savedDate = format(new Date(state.lastUpdated), "yyyy-MM-dd");
 
-  if (savedDate !== today) return null;
+  if (state.gameDate !== today) return null; // Validate using gameDate
   return state;
 }
 
@@ -172,9 +165,11 @@ export function isValidWord(word: string): boolean {
 
 export function isDerivative(word: string, targetWords: string[]): boolean {
   const wordStem = stemmer(word.toLowerCase());
+  const wordLemma = lemmatizer(word);
   return targetWords.some((target) => {
     const targetStem = stemmer(target.toLowerCase());
-    return wordStem === targetStem;
+    const targetLemma = lemmatizer(target.toLowerCase());
+    return wordStem === targetStem || wordLemma === targetLemma;
   });
 }
 
@@ -282,7 +277,7 @@ function manualWordSets(): { [date: string]: GameData } {
       tabooWord: "round",
     },
     "2025-04-02": {
-      targetWords: ["library", "code", "mouse", "direction", "king"],
+      targetWords: ["school", "code", "rat", "direction", "king"],
       tabooWord: "baby",
     },
     "2025-04-03": {

@@ -25,6 +25,7 @@
 *.pem
 datagen.ts
 printWordSets.ts
+tests.ts
 
 # debug
 npm-debug.log*

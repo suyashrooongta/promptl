@@ -9,12 +9,14 @@
     "start": "next start",
     "lint": "next lint",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "devDataGen": "npx tsx printWordSets.ts"
+    "devDataGen": "npx tsx printWordSets.ts",
+    "devtest": "npx tsx tests.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "axios": "^1.8.1",
     "date-fns": "^3.3.1",
+    "lemmatizer": "^0.0.1",
     "lucide-react": "^0.485.0",
     "marked": "^15.0.7",
     "next": "^15.2.0",
@@ -24,7 +26,8 @@
     "react-dom": "^19.0.0",
     "stemmer": "^1.0.5",
     "uuid": "^11.1.0",
-    "word-list-json": "^0.2.0"
+    "word-list-json": "^0.2.0",
+    "wordnet": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

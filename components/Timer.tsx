@@ -11,14 +11,8 @@ interface TimerProps {
 
 export function Timer({ isPaused, onTimeUp }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(() => {
-    const savedState = loadGameState();
-    if (savedState) {
-      const savedTimeLeft = localStorage.getItem(TIME_LEFT_KEY);
-      return savedTimeLeft
-        ? parseInt(savedTimeLeft, 10)
-        : GAME_DURATION_CONSTANT;
-    }
-    return GAME_DURATION_CONSTANT;
+    const savedTimeLeft = localStorage.getItem(TIME_LEFT_KEY);
+    return savedTimeLeft ? parseInt(savedTimeLeft, 10) : GAME_DURATION_CONSTANT;
   });
 
   useEffect(() => {

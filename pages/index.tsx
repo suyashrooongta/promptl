@@ -43,7 +43,6 @@ export default function Home() {
       matchedWords: {},
       bonusPoints: {},
       tabooHit: {},
-      lastUpdated: Date.now(),
     };
   });
 
@@ -82,6 +81,8 @@ export default function Home() {
         } else {
           setGameStatus(GameStatus.GAME_IN_PROGRESS);
         }
+      } else {
+        localStorage.removeItem(TIME_LEFT_KEY);
       }
       setShowStartScreen(true); // Always show the start screen
     }

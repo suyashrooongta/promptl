@@ -11,7 +11,6 @@ export interface GameState {
   matchedWords: { [key: string]: string[] };
   bonusPoints: { [key: string]: number };
   tabooHit: { [key: string]: boolean };
-  lastUpdated: number;
 }
 
 export interface PlayerStats {
@@ -28,6 +27,7 @@ export interface PlayerStats {
 export interface GameData {
   targetWords: string[];
   tabooWord: string;
+  gameDate: string;
 }
 
 export interface AIResponse {
