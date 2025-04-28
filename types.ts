@@ -9,8 +9,9 @@ export interface GameState {
   score: number;
   aiResponses: { [key: string]: string };
   matchedWords: { [key: string]: string[] };
+  matchedWordIndices: { [key: string]: number[] };
   bonusPoints: { [key: string]: number };
-  tabooHit: { [key: string]: boolean };
+  tabooWordIndex: { [key: string]: number };
 }
 
 export interface PlayerStats {
@@ -33,6 +34,7 @@ export interface GameData {
 export interface AIResponse {
   response: string;
   matchedWords: string[];
-  tabooHit: boolean;
+  tabooWordIndex: number;
   bonusPoints: number;
+  matchedWordIndices: number[];
 }

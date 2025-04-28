@@ -41,8 +41,9 @@ export default function Home() {
       score: 200,
       aiResponses: {},
       matchedWords: {},
+      matchedWordIndices: {},
       bonusPoints: {},
-      tabooHit: {},
+      tabooWordIndex: {},
     };
   });
 
@@ -186,7 +187,7 @@ export default function Home() {
           ? 0
           : calculateScore(
               [...prev.prompts, word],
-              { ...prev.tabooHit, [word]: result.tabooHit },
+              { ...prev.tabooWordIndex, [word]: result.tabooWordIndex },
               { ...prev.matchedWords, [word]: result.matchedWords },
               { ...prev.bonusPoints, [word]: result.bonusPoints }
             );
@@ -203,8 +204,15 @@ export default function Home() {
           score: newScore,
           aiResponses: { ...prev.aiResponses, [word]: result.response },
           matchedWords: { ...prev.matchedWords, [word]: result.matchedWords },
+          matchedWordIndices: {
+            ...prev.matchedWordIndices,
+            [word]: result.matchedWordIndices,
+          },
           bonusPoints: { ...prev.bonusPoints, [word]: result.bonusPoints },
-          tabooHit: { ...prev.tabooHit, [word]: result.tabooHit },
+          tabooWordIndex: {
+            ...prev.tabooWordIndex,
+            [word]: result.tabooWordIndex,
+          },
         };
       });
 
@@ -213,7 +221,7 @@ export default function Home() {
       setShowAIResponse(!(isGameLost || isGameWon));
       setPrompt("");
     } catch (err) {
-      setError("Failed to check response. Please try again." + err);
+      setError("Failed to get response. Please try again." + err);
     } finally {
       setIsLoading(false);
     }
@@ -411,7 +419,7 @@ export default function Home() {
                 className={`px-4 py-2 rounded-xl transition-all hover:scale-105 ${
                   gameState.matchedWords[p]?.length > 0
                     ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800"
-                    : gameState.tabooHit[p]
+                    : gameState.tabooWordIndex[p] !== -1
                     ? "bg-gradient-to-r from-red-100 to-red-200 text-red-800"
                     : "bg-black-200 text-gray-800"
                 }`}
@@ -422,7 +430,7 @@ export default function Home() {
                     +{gameState.bonusPoints[p]}
                   </span>
                 )}
-                {gameState.tabooHit[p] && (
+                {gameState.tabooWordIndex[p] !== -1 && (
                   <span className="ml-2 text-xs font-bold text-red-600">
                     -20
                   </span>
@@ -456,10 +464,10 @@ export default function Home() {
           prompt={selectedPrompt}
           response={gameState.aiResponses[selectedPrompt]}
           matchedWords={gameState.matchedWords[selectedPrompt]}
+          matchedWordIndices={gameState.matchedWordIndices[selectedPrompt]}
           tabooWord={gameState.tabooWord}
-          tabooHit={gameState.tabooHit[selectedPrompt]}
+          tabooWordIndex={gameState.tabooWordIndex[selectedPrompt]}
           bonusPoints={gameState.bonusPoints[selectedPrompt] || 0}
-          isEasyMode={gameState.isEasyMode}
           onClose={() => {
             setShowAIResponse(false);
             setSelectedPrompt(null);

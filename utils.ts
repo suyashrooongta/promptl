@@ -4,7 +4,8 @@ import { allTargetWords } from "./data/words";
 import wordList from "word-list-json";
 // @ts-ignore
 import stemmer from "stemmer";
-import { lemmatizer } from "lemmatizer";
+// @ts-ignore
+import Lemmatizer from "javascript-lemmatizer";
 
 import { format } from "date-fns";
 import axios from "axios";
@@ -87,18 +88,20 @@ export function loadGameState(): GameState | null {
 
 export function calculateScore(
   prompts: string[],
-  tabooHit: { [key: string]: boolean },
+  tabooWordIndex: { [key: string]: number },
   matchedWords: { [key: string]: string[] },
   bonusPoints: { [key: string]: number }
 ): number {
   let score = BASE_SCORE;
 
   // Count penalties (no matches or taboo hits)
-  const tabooPrompts = prompts.filter((prompt) => tabooHit[prompt]);
+  const tabooPrompts = prompts.filter(
+    (prompt) => tabooWordIndex[prompt] !== -1
+  );
   score -= tabooPrompts.length * PENALTY_PER_TABOO_HIT;
   const wastedPrompts = prompts.filter(
     (prompt) =>
-      !tabooHit[prompt] &&
+      tabooWordIndex[prompt] === -1 &&
       (!matchedWords[prompt] || matchedWords[prompt].length === 0)
   );
   score -= wastedPrompts.length * PENALTY_PER_WASTED_PROMPT;
@@ -165,40 +168,10 @@ export function isValidWord(word: string): boolean {
 
 export function isDerivative(word: string, targetWords: string[]): boolean {
   const wordStem = stemmer(word.toLowerCase());
-  const wordLemma = lemmatizer(word);
   return targetWords.some((target) => {
     const targetStem = stemmer(target.toLowerCase());
-    const targetLemma = lemmatizer(target.toLowerCase());
-    return wordStem === targetStem || wordLemma === targetLemma;
+    return wordStem === targetStem;
   });
-}
-
-export function checkWordMatch(
-  word: string,
-  target: string,
-  isEasyMode: boolean
-): boolean {
-  const cleanWord = word.toLowerCase().replace(/[.,:\*!?]/g, "");
-  const cleanTarget = target.toLowerCase();
-
-  if (isEasyMode) {
-    return stemmer(cleanWord) === stemmer(cleanTarget);
-  }
-  return cleanWord === cleanTarget;
-}
-
-export function findMatchedWords(
-  text: string,
-  targetWords: string[],
-  solvedWords: string[],
-  isEasyMode: boolean
-): string[] {
-  const words = text.split(/\s+/);
-  return targetWords.filter(
-    (target) =>
-      !solvedWords.includes(target) &&
-      words.some((word) => checkWordMatch(word, target, isEasyMode))
-  );
 }
 
 export async function checkAIResponse(
@@ -208,8 +181,8 @@ export async function checkAIResponse(
   solvedWords: string[],
   isEasyMode: boolean
 ): Promise<AIResponse> {
+  let aiResponse = "";
   try {
-    let aiResponse = "";
     if (prompt.startsWith("echo")) {
       aiResponse = prompt.replace("echo", "").trim();
     } else {
@@ -220,32 +193,16 @@ export async function checkAIResponse(
         .then((res) => res.data.response as string);
     }
 
-    // Check for taboo word using case-insensitive match
-    if (
-      aiResponse
-        .toLowerCase()
-        .split(/\s+/)
-        .some(
-          (word) =>
-            word.replace(/[.,\*!?]/g, "").toLowerCase() ===
-            tabooWord.toLowerCase()
-        )
-    ) {
-      return {
-        response: aiResponse,
-        matchedWords: [],
-        tabooHit: true,
-        bonusPoints: 0,
-      };
-    }
-
-    // Find matched words that haven't been solved yet
-    const matchedWords = findMatchedWords(
+    // Call checkairesponse API with the required request body
+    const response = await axios.post("/api/checkairesponse", {
       aiResponse,
-      targetWords,
-      solvedWords,
-      isEasyMode
-    );
+      targetWords: targetWords.filter((word) => !solvedWords.includes(word)),
+      tabooWord,
+      easyMode: isEasyMode,
+    });
+
+    // Extract data from the API response
+    const { matchedWords, tabooWordIndex, matchedWordIndices } = response.data;
 
     // Calculate bonus points
     const bonusPoints =
@@ -256,17 +213,13 @@ export async function checkAIResponse(
     return {
       response: aiResponse,
       matchedWords,
-      tabooHit: false,
+      tabooWordIndex,
       bonusPoints,
+      matchedWordIndices,
     };
   } catch (error) {
-    console.error("Error calling OpenAI:", error);
-    return {
-      response: "Error: Failed to get AI response",
-      matchedWords: [],
-      tabooHit: false,
-      bonusPoints: 0,
-    };
+    console.error("Error calling OpenAI or checkairesponse API:", error);
+    throw new Error("Failed to fetch AI response");
   }
 }
 

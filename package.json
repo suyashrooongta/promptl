@@ -15,7 +15,9 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "axios": "^1.8.1",
+    "compromise": "^14.14.4",
     "date-fns": "^3.3.1",
+    "javascript-lemmatizer": "^0.0.2",
     "lemmatizer": "^0.0.1",
     "lucide-react": "^0.485.0",
     "marked": "^15.0.7",
@@ -26,6 +28,8 @@
     "react-dom": "^19.0.0",
     "stemmer": "^1.0.5",
     "uuid": "^11.1.0",
+    "wink-eng-lite-web-model": "^1.8.1",
+    "wink-nlp": "^2.3.2",
     "word-list-json": "^0.2.0",
     "wordnet": "^2.0.0"
   },
@@ -43,6 +47,7 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
+    "json-loader": "^0.5.7",
     "postcss": "^8.4.35",
     "prisma": "^6.5.0",
     "tailwindcss": "^4.0.17",

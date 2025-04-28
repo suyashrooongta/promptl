@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { checkWordMatch } from "../utils";
 import { marked } from "marked";
 import { useState } from "react";
 
@@ -7,10 +6,10 @@ interface AIResponseProps {
   prompt: string;
   response: string;
   matchedWords: string[];
+  matchedWordIndices: number[];
   tabooWord: string;
-  tabooHit: boolean;
+  tabooWordIndex: number;
   bonusPoints: number;
-  isEasyMode: boolean;
   onClose: () => void;
 }
 
@@ -18,10 +17,10 @@ export function AIResponse({
   prompt,
   response,
   matchedWords,
+  matchedWordIndices,
   tabooWord,
-  tabooHit,
+  tabooWordIndex,
   bonusPoints,
-  isEasyMode,
   onClose,
 }: AIResponseProps) {
   const [loading, setLoading] = useState(false);
@@ -32,26 +31,23 @@ export function AIResponse({
   };
 
   // Split response into words and highlight matches
+  console.log("matchedWordIndices", matchedWordIndices);
 
   const highlightMarkdown = (markdown: string) => {
     let processedMarkdown = markdown;
 
     const markdownwords = markdown.split(/(\s+)/);
 
-    const highlightedWords = markdownwords.map((word, index) => {
+    let nonWhitespaceIndex = 0; // Track non-whitespace word index
+    const highlightedWords = markdownwords.map((word) => {
       if (word.trim() === "") return word;
 
-      const cleanWord = word.replace(/[.,!?]/g, "");
-
-      if (checkWordMatch(cleanWord, tabooWord, false)) {
+      const currentIndex = nonWhitespaceIndex++;
+      if (currentIndex === tabooWordIndex) {
         return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
       }
 
-      if (
-        matchedWords.some((target) =>
-          checkWordMatch(cleanWord, target, isEasyMode)
-        )
-      ) {
+      if (matchedWordIndices.includes(currentIndex)) {
         return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
       }
 
@@ -65,6 +61,8 @@ export function AIResponse({
   const highlightedResponse = (
     <div dangerouslySetInnerHTML={{ __html: highlightMarkdown(response) }} />
   );
+
+  const tabooHit = tabooWordIndex !== -1;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
