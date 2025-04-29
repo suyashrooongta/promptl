@@ -5,7 +5,9 @@ import wordList from "word-list-json";
 // @ts-ignore
 import stemmer from "stemmer";
 // @ts-ignore
-import Lemmatizer from "javascript-lemmatizer";
+import lemmatizer from "wink-lemmatizer";
+// @ts-ignore
+import { lemmatizer as baseLemmatizer } from "lemmatizer";
 
 import { format } from "date-fns";
 import axios from "axios";
@@ -167,10 +169,12 @@ export function isValidWord(word: string): boolean {
 }
 
 export function isDerivative(word: string, targetWords: string[]): boolean {
-  const wordStem = stemmer(word.toLowerCase());
+  const wordLemmas = getLemmas(word.toLowerCase());
+  const targetWordLemmasMap = preprocessTargetWords(targetWords);
+
   return targetWords.some((target) => {
-    const targetStem = stemmer(target.toLowerCase());
-    return wordStem === targetStem;
+    const targetLemmas = targetWordLemmasMap.get(target) || new Set();
+    return [...wordLemmas].some((lemma) => targetLemmas.has(lemma));
   });
 }
 
@@ -193,34 +197,78 @@ export async function checkAIResponse(
         .then((res) => res.data.response as string);
     }
 
-    // Call checkairesponse API with the required request body
-    const response = await axios.post("/api/checkairesponse", {
+    // Call processAIResponse directly
+    const result = processAIResponse(
       aiResponse,
-      targetWords: targetWords.filter((word) => !solvedWords.includes(word)),
+      targetWords.filter((word) => !solvedWords.includes(word)),
       tabooWord,
-      easyMode: isEasyMode,
-    });
-
-    // Extract data from the API response
-    const { matchedWords, tabooWordIndex, matchedWordIndices } = response.data;
+      isEasyMode
+    );
 
     // Calculate bonus points
     const bonusPoints =
-      matchedWords.length > 1
-        ? (matchedWords.length - 1) * BONUS_PER_EXTRA_WORD
+      result.matchedWords.length > 1
+        ? (result.matchedWords.length - 1) * BONUS_PER_EXTRA_WORD
         : 0;
 
     return {
       response: aiResponse,
-      matchedWords,
-      tabooWordIndex,
+      matchedWords: result.matchedWords,
+      tabooWordIndex: result.tabooWordIndex,
       bonusPoints,
-      matchedWordIndices,
+      matchedWordIndices: result.matchedWordIndices,
     };
   } catch (error) {
-    console.error("Error calling OpenAI or checkairesponse API:", error);
+    console.error("Error calling OpenAI or processing AI response:", error);
     throw new Error("Failed to fetch AI response");
   }
+}
+
+export function processAIResponse(
+  aiResponse: string,
+  targetWords: string[],
+  tabooWord: string,
+  easyMode: boolean
+): {
+  matchedWords: string[];
+  matchedWordIndices: number[];
+  tabooWordIndex: number;
+} {
+  const words = aiResponse.split(/\s+/);
+  const matchedWords: string[] = [];
+  const matchedWordIndices: number[] = [];
+  const targetWordLemmasMap = preprocessTargetWords(targetWords);
+
+  for (let index = 0; index < words.length; index++) {
+    const cleanWord = words[index].toLowerCase().replace(/[.,:\*!?]/g, "");
+    const wordLemmas = getLemmas(cleanWord);
+
+    if (
+      processWord(
+        cleanWord,
+        tabooWord,
+        wordLemmas,
+        targetWords,
+        targetWordLemmasMap,
+        easyMode,
+        matchedWords,
+        matchedWordIndices,
+        index
+      )
+    ) {
+      return {
+        matchedWords: [],
+        matchedWordIndices: [],
+        tabooWordIndex: index,
+      };
+    }
+  }
+
+  return {
+    matchedWords,
+    matchedWordIndices,
+    tabooWordIndex: -1,
+  };
 }
 
 function manualWordSets(): {
@@ -380,3 +428,101 @@ function hash(seed: number, i: number): number {
 
 export const MAX_PROMPTS_CONSTANT = MAX_PROMPTS;
 export const GAME_DURATION_CONSTANT = GAME_DURATION;
+
+export function getLemmas(word: string): Set<string> {
+  const lemmas = new Set<string>(
+    [
+      lemmatizer.noun(word),
+      lemmatizer.verb(word),
+      lemmatizer.adjective(word),
+    ].filter(Boolean)
+  ); // Remove undefined values
+
+  lemmas.add(stemmer(word)); // Add stemmed form
+  lemmas.add(word); // Add original word
+  lemmas.add(baseLemmatizer(word)); // Add base lemmatizer form
+
+  // Handle common adverb patterns (e.g., stripping '-ly')
+  if (word.endsWith("ly")) {
+    const baseForm = word.slice(0, -2); // Remove 'ly' suffix
+    if (wordList.includes(baseForm)) {
+      lemmas.add(baseForm);
+    }
+
+    // Handle cases where base form ends in 'i'
+    if (baseForm.endsWith("i")) {
+      const replacedWithY = baseForm.slice(0, -1) + "y";
+      const replacedWithE = baseForm.slice(0, -1) + "e";
+
+      if (wordList.includes(replacedWithY)) {
+        lemmas.add(replacedWithY);
+      }
+      if (wordList.includes(replacedWithE)) {
+        lemmas.add(replacedWithE);
+      }
+    }
+  }
+
+  return lemmas;
+}
+
+export function preprocessTargetWords(
+  targetWords: string[]
+): Map<string, Set<string>> {
+  // Updated to use Set<string>
+  const targetWordLemmasMap = new Map<string, Set<string>>();
+  targetWords.forEach((target) => {
+    const cleanTarget = target.toLowerCase();
+    targetWordLemmasMap.set(target, getLemmas(cleanTarget));
+  });
+  return targetWordLemmasMap;
+}
+
+export function processWord(
+  cleanWord: string,
+  tabooWord: string,
+  wordLemmas: Set<string>, // Updated to use Set<string>
+  targetWords: string[],
+  targetWordLemmasMap: Map<string, Set<string>>, // Updated to use Set<string>
+  easyMode: boolean,
+  matchedWords: string[],
+  matchedWordIndices: number[],
+  index: number
+): boolean {
+  if (cleanWord === tabooWord.toLowerCase()) {
+    return true; // Taboo word found
+  }
+
+  targetWords.forEach((target) => {
+    const cleanTarget = target.toLowerCase();
+    if (!easyMode) {
+      if (cleanWord === cleanTarget) {
+        addMatch(matchedWords, target, matchedWordIndices, index);
+      }
+      return;
+    }
+    // if (cleanWord.slice(0, 5) === cleanTarget.slice(0, 5)) {
+    //   addMatch(matchedWords, target, matchedWordIndices, index);
+    //   return;
+    // }
+    const targetLemmas = targetWordLemmasMap.get(target) || new Set();
+    if ([...wordLemmas].some((lemma) => targetLemmas.has(lemma))) {
+      // Updated to check Set intersection
+      addMatch(matchedWords, target, matchedWordIndices, index);
+    }
+  });
+
+  return false;
+}
+
+export function addMatch(
+  matchedWords: string[],
+  target: string,
+  matchedWordIndices: number[],
+  index: number
+) {
+  if (!matchedWords.includes(target)) {
+    matchedWords.push(target);
+  }
+  matchedWordIndices.push(index);
+}
