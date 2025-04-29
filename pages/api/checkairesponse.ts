@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 // @ts-ignore
-import Lemmatizer from "javascript-lemmatizer";
+import lemmatizer from "node-lemmatizer";
 
 type Data = {
   name: string;
@@ -36,7 +36,6 @@ export default function handler(
     const words = aiResponse.split(/\s+/);
     const matchedWords: string[] = [];
     const matchedWordIndices: number[] = [];
-    const lemmatizer = new Lemmatizer();
 
     // Precompute lemmas for target words
     const targetWordLemmasMap = new Map<string, string[]>();
@@ -51,13 +50,11 @@ export default function handler(
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[.,:\*!?]/g, "");
       if (cleanWord === tabooWord.toLowerCase()) {
-        res
-          .status(200)
-          .json({
-            matchedWords: [],
-            matchedWordIndices: [],
-            tabooWordIndex: index,
-          });
+        res.status(200).json({
+          matchedWords: [],
+          matchedWordIndices: [],
+          tabooWordIndex: index,
+        });
       }
       const wordLemmas = lemmatizer.only_lemmas(cleanWord);
       targetWords.forEach((target) => {
