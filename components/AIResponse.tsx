@@ -50,11 +50,12 @@ export function AIResponse({
   const highlightMarkdown = (markdown: string) => {
     let processedMarkdown = markdown;
 
-    const markdownwords = markdown.split(/(\s+)/);
+    // Split into words and punctuation while preserving them
+    const markdownWords = markdown.split(/(\W+)/); // Matches non-word characters (punctuation, spaces, etc.)
 
     let nonWhitespaceIndex = 0; // Track non-whitespace word index
-    const highlightedWords = markdownwords.map((word) => {
-      if (word.trim() === "") return word;
+    const highlightedWords = markdownWords.map((word) => {
+      if (!/\w/.test(word)) return word; // Skip non-word characters (punctuation, spaces)
 
       const currentIndex = nonWhitespaceIndex++;
       if (currentIndex === tabooWordIndex) {
@@ -67,6 +68,7 @@ export function AIResponse({
 
       return word;
     });
+
     processedMarkdown = highlightedWords.join("");
 
     return marked(processedMarkdown);

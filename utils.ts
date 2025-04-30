@@ -11,6 +11,7 @@ import { lemmatizer as baseLemmatizer } from "lemmatizer";
 
 import { format } from "date-fns";
 import axios from "axios";
+import { wordSets } from "./data/wordSets";
 
 export const IS_SERVER = typeof window === "undefined";
 export const localStore = IS_SERVER ? undefined : localStorage;
@@ -31,7 +32,7 @@ interface DailyWords {
 
 export function getGameData(date: Date): GameData {
   const dateString = format(date, "yyyy-MM-dd");
-  const savedWords = manualWordSets();
+  const savedWords = wordSets;
 
   if (savedWords[dateString]) {
     return { ...savedWords[dateString], gameDate: dateString };
@@ -243,13 +244,14 @@ export function processAIResponse(
   matchedWordIndices: number[];
   tabooWordIndex: number;
 } {
-  const words = aiResponse.split(/\s+/);
+  // Split response into words using a regex to match non-alphanumeric characters
+  const words = aiResponse.split(/\W+/).filter(Boolean); // Filter out empty strings
   const matchedWords: string[] = [];
   const matchedWordIndices: number[] = [];
   const targetWordLemmasMap = preprocessTargetWords(targetWords);
 
   for (let index = 0; index < words.length; index++) {
-    const cleanWord = words[index].toLowerCase().replace(/[.,:\*!?]/g, "");
+    const cleanWord = words[index].toLowerCase();
     const wordLemmas = getLemmas(cleanWord);
 
     if (
@@ -278,141 +280,6 @@ export function processAIResponse(
     matchedWordIndices,
     tabooWordIndex: -1,
   };
-}
-
-function manualWordSets(): {
-  [date: string]: { targetWords: string[]; tabooWord: string };
-} {
-  const wordSets = {
-    "2025-04-01": {
-      targetWords: ["nation", "document", "cricket", "law", "choice"],
-      tabooWord: "round",
-    },
-    "2025-04-02": {
-      targetWords: ["school", "code", "rat", "direction", "king"],
-      tabooWord: "baby",
-    },
-    "2025-04-03": {
-      targetWords: ["door", "planet", "finger", "moon", "desert"],
-      tabooWord: "church",
-    },
-    "2025-04-04": {
-      targetWords: ["wall", "music", "phone", "fear", "child"],
-      tabooWord: "disease",
-    },
-    "2025-04-05": {
-      targetWords: ["plant", "value", "morning", "diamond", "partner"],
-      tabooWord: "fire",
-    },
-    "2025-04-06": {
-      targetWords: ["baby", "piano", "feeling", "town", "metal"],
-      tabooWord: "head",
-    },
-    "2025-04-07": {
-      targetWords: ["church", "venus", "hair", "artist", "past"],
-      tabooWord: "fall",
-    },
-    "2025-04-08": {
-      targetWords: ["brother", "luck", "second", "holiday", "part"],
-      tabooWord: "root",
-    },
-    "2025-04-09": {
-      targetWords: ["novel", "bomb", "light", "river", "science"],
-      tabooWord: "space",
-    },
-    "2025-04-10": {
-      targetWords: ["relative", "country", "ship", "hour", "blue"],
-      tabooWord: "princess",
-    },
-    "2025-04-11": {
-      targetWords: ["palm", "breakfast", "question", "future", "winter"],
-      tabooWord: "smell",
-    },
-    "2025-04-12": {
-      targetWords: ["cap", "ghost", "writer", "novel", "bitter"],
-      tabooWord: "red",
-    },
-    "2025-04-13": {
-      targetWords: ["gold", "air", "book", "teacher", "luck"],
-      tabooWord: "oval",
-    },
-    "2025-04-14": {
-      targetWords: ["number", "sweet", "lion", "weather", "scientist"],
-      tabooWord: "education",
-    },
-    "2025-04-15": {
-      targetWords: ["team", "lunch", "server", "home", "student"],
-      tabooWord: "winter",
-    },
-    "2025-04-16": {
-      targetWords: ["writer", "shoe", "house", "profit", "cold"],
-      tabooWord: "sun",
-    },
-    "2025-04-17": {
-      targetWords: ["industry", "teacher", "rain", "computer", "holiday"],
-      tabooWord: "second",
-    },
-    "2025-04-18": {
-      targetWords: [
-        "communication",
-        "history",
-        "battery",
-        "business",
-        "rectangle",
-      ],
-      tabooWord: "day",
-    },
-    "2025-04-19": {
-      targetWords: ["hospital", "bitter", "result", "saturn", "africa"],
-      tabooWord: "cat",
-    },
-    "2025-04-20": {
-      targetWords: ["diamond", "asia", "jupiter", "cat", "goal"],
-      tabooWord: "toe",
-    },
-    "2025-04-21": {
-      targetWords: ["china", "metal", "day", "instrument", "business"],
-      tabooWord: "apple",
-    },
-    "2025-04-22": {
-      targetWords: ["hair", "artist", "past", "fall", "time"],
-      tabooWord: "venus",
-    },
-    "2025-04-23": {
-      targetWords: ["knight", "child", "train", "grass", "antarctica"],
-      tabooWord: "parent",
-    },
-    "2025-04-24": {
-      targetWords: ["fire", "value", "diamond", "sour", "fabric"],
-      tabooWord: "morning",
-    },
-    "2025-04-25": {
-      targetWords: ["baby", "feeling", "town", "government", "day"],
-      tabooWord: "piano",
-    },
-    "2025-04-26": {
-      targetWords: ["stomach", "finger", "church", "moon", "artist"],
-      tabooWord: "desert",
-    },
-    "2025-04-27": {
-      targetWords: ["music", "disease", "spring", "child", "mercury"],
-      tabooWord: "fear",
-    },
-    "2025-04-28": {
-      targetWords: ["basketball", "law", "choice", "value", "guitar"],
-      tabooWord: "document",
-    },
-    "2025-04-29": {
-      targetWords: ["code", "mouse", "ghost", "baby", "king"],
-      tabooWord: "change",
-    },
-    "2025-04-30": {
-      targetWords: ["morning", "partner", "tennis", "relative", "world"],
-      tabooWord: "park",
-    },
-  };
-
-  return wordSets;
 }
 
 function yesterday(dateString: string): string {
@@ -495,7 +362,10 @@ export function processWord(
   matchedWordIndices: number[],
   index: number
 ): boolean {
-  if (cleanWord === tabooWord.toLowerCase()) {
+  if (
+    cleanWord === tabooWord.toLowerCase() ||
+    stemmer(cleanWord) === stemmer(tabooWord.toLowerCase())
+  ) {
     return true; // Taboo word found
   }
 

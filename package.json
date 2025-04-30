@@ -22,7 +22,6 @@
     "marked": "^15.0.7",
     "next": "^15.2.0",
     "node": "^18.20.8",
-    "node-lemmatizer": "^1.0.3",
     "openai": "^4.90.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
