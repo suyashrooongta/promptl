@@ -16,7 +16,7 @@ type RequestBody = {
 type ResponseData = {
   matchedWords: string[];
   matchedWordIndices: number[];
-  tabooWordIndex: number;
+  tabooWordIndices: number[];
 };
 
 export default function handler(
