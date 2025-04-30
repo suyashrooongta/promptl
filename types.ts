@@ -12,6 +12,8 @@ export interface GameState {
   matchedWordIndices: { [key: string]: number[] };
   bonusPoints: { [key: string]: number };
   tabooWordIndex: { [key: string]: number };
+  targetWordResponses?: { [key: string]: string }; // Optional property for target word responses as strings
+  tabooWordResponse?: string; // Optional property for taboo word response as a string
 }
 
 export interface PlayerStats {

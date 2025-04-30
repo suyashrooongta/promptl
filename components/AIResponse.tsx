@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { marked } from "marked";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { PENALTY_PER_TABOO_HIT_CONSTANT } from "../utils"; // Import the constant
 
 interface AIResponseProps {
   prompt: string;
@@ -29,6 +30,19 @@ export function AIResponse({
     setLoading(true);
     onClose();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   // Split response into words and highlight matches
   console.log("matchedWordIndices", matchedWordIndices);
@@ -104,7 +118,7 @@ export function AIResponse({
             <div className="text-red-200 font-semibold animate-bounce text-xl mt-2">
               {" "}
               {/* Increased size */}
-              😢 -20 points!
+              😢 -{PENALTY_PER_TABOO_HIT_CONSTANT} points!
             </div>
           )}
         </div>

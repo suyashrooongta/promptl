@@ -14,6 +14,7 @@ import {
   MAX_PROMPTS_CONSTANT,
   isValidWord,
   isDerivative,
+  fetchAIResponse,
   checkAIResponse,
   loadGameState,
   saveGameState,
@@ -28,7 +29,7 @@ enum GameStatus {
   GAME_OVER = "GAME_OVER",
 }
 
-const GAME_VARIANT = "v1";
+const GAME_VARIANT = "v2";
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -86,6 +87,53 @@ export default function Home() {
         }
       } else {
         clearTimeLeft(GAME_VARIANT);
+        // Fetch AI responses for target and taboo words
+        const fetchAIResponses = async () => {
+          const retryFetch = async (
+            fetchFn: () => Promise<any>,
+            retries = 3
+          ): Promise<any> => {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+              try {
+                return await fetchFn();
+              } catch (err) {
+                if (attempt === retries) throw err;
+              }
+            }
+          };
+
+          try {
+            const targetResponses = await Promise.all(
+              gameState.targetWords.map((word) =>
+                retryFetch(() => fetchAIResponse(word))
+              )
+            );
+            const tabooResponse = await retryFetch(() =>
+              fetchAIResponse(gameState.tabooWord)
+            );
+
+            setGameState((prev) => ({
+              ...prev,
+              targetWordResponses: Object.fromEntries(
+                gameState.targetWords.map((word, i) => [
+                  word,
+                  targetResponses[i],
+                ])
+              ),
+              tabooWordResponse: tabooResponse,
+            }));
+          } catch (err) {
+            console.error(
+              "Failed to fetch AI responses for target/taboo words after retries:",
+              err
+            );
+            setError(
+              "Failed to fetch AI responses. Please refresh and try again."
+            );
+          }
+        };
+
+        fetchAIResponses();
       }
       setShowStartScreen(true); // Always show the start screen
     }

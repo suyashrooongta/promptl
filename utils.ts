@@ -16,15 +16,14 @@ export const IS_SERVER = typeof window === "undefined";
 export const localStore = IS_SERVER ? undefined : localStorage;
 
 const STATS_KEY = "promptl_stats";
-const WORDS_KEY = "promptl_words";
 const GAME_STATE_KEY = "promptl_game_state";
-const MAX_PROMPTS = 10;
-const GAME_DURATION = 10 * 60 * 1000; // 20 minutes in milliseconds
-const BASE_SCORE = 200;
-const PENALTY_PER_WASTED_PROMPT = 10;
-const PENALTY_PER_TABOO_HIT = 20;
-const BONUS_PER_EXTRA_WORD = 10;
-const TIME_LEFT_KEY = "promptl_time_left";
+export const MAX_PROMPTS_CONSTANT = 10;
+export const GAME_DURATION_CONSTANT = 10 * 60 * 1000; // 20 minutes in milliseconds
+export const BASE_SCORE_CONSTANT = 100;
+const PENALTY_PER_WASTED_PROMPT = 5;
+export const PENALTY_PER_TABOO_HIT_CONSTANT = 10;
+const BONUS_PER_EXTRA_WORD = 5;
+export const TIME_LEFT_KEY_CONSTANT = "promptl_time_left";
 
 interface DailyWords {
   [date: string]: GameData;
@@ -64,21 +63,14 @@ export function getGameData(date: Date): GameData {
   };
 }
 
-export function setGameData(date: Date, data: GameData): void {
-  const dateString = format(date, "yyyy-MM-dd");
-  const savedWords: DailyWords = JSON.parse(
-    localStore?.getItem(WORDS_KEY) || "{}"
-  );
-  savedWords[dateString] = data;
-  localStore?.setItem(WORDS_KEY, JSON.stringify(savedWords));
+export function saveGameState(state: GameState, variant: String = "v1"): void {
+  const gameStateKey = `${GAME_STATE_KEY}_${variant}`;
+  localStore?.setItem(gameStateKey, JSON.stringify(state));
 }
 
-export function saveGameState(state: GameState): void {
-  localStore?.setItem(GAME_STATE_KEY, JSON.stringify(state));
-}
-
-export function loadGameState(): GameState | null {
-  const savedState = localStore?.getItem(GAME_STATE_KEY);
+export function loadGameState(variant: String = "v1"): GameState | null {
+  const gameStateKey = `${GAME_STATE_KEY}_${variant}`;
+  const savedState = localStore?.getItem(gameStateKey);
   if (!savedState) return null;
 
   const state = JSON.parse(savedState);
@@ -88,19 +80,24 @@ export function loadGameState(): GameState | null {
   return state;
 }
 
+export function clearTimeLeft(variant: String = "v1"): void {
+  const timeLeftKey = `${TIME_LEFT_KEY_CONSTANT}_${variant}`;
+  localStore?.removeItem(timeLeftKey);
+}
+
 export function calculateScore(
   prompts: string[],
   tabooWordIndex: { [key: string]: number },
   matchedWords: { [key: string]: string[] },
   bonusPoints: { [key: string]: number }
 ): number {
-  let score = BASE_SCORE;
+  let score = BASE_SCORE_CONSTANT;
 
   // Count penalties (no matches or taboo hits)
   const tabooPrompts = prompts.filter(
     (prompt) => tabooWordIndex[prompt] !== -1
   );
-  score -= tabooPrompts.length * PENALTY_PER_TABOO_HIT;
+  score -= tabooPrompts.length * PENALTY_PER_TABOO_HIT_CONSTANT;
   const wastedPrompts = prompts.filter(
     (prompt) =>
       tabooWordIndex[prompt] === -1 &&
@@ -114,7 +111,7 @@ export function calculateScore(
   return Math.max(0, score);
 }
 
-export function getStats(): PlayerStats {
+export function getStats(variant: string = "v1"): PlayerStats {
   const defaultStats: PlayerStats = {
     gamesPlayed: 0,
     gamesWon: 0,
@@ -126,16 +123,26 @@ export function getStats(): PlayerStats {
     totalPromptsUsed: 0,
   };
 
-  const stats = localStore?.getItem(STATS_KEY);
+  const statsKey = `${STATS_KEY}_${variant}`;
+  const stats = localStore?.getItem(statsKey);
   return stats ? JSON.parse(stats) : defaultStats;
 }
 
-export function updateStats(won: boolean, score: number, promptsUsed: number) {
-  const stats = getStats();
+export function updateStats(
+  won: boolean,
+  score: number,
+  promptsUsed: number,
+  variant: string = "v1" // Added variant as a parameter with default value
+) {
+  const statsKey = `${STATS_KEY}_${variant}`;
+  const timeLeftKey = `${TIME_LEFT_KEY_CONSTANT}_${variant}`;
+  const stats = localStore?.getItem(statsKey)
+    ? JSON.parse(localStore.getItem(statsKey)!)
+    : getStats();
   const today = format(new Date(), "yyyy-MM-dd");
 
   // Read timeLeft from localStorage and calculate timeUsed
-  const timeLeft = parseInt(localStorage.getItem(TIME_LEFT_KEY) || "0", 10);
+  const timeLeft = parseInt(localStorage.getItem(timeLeftKey) || "0", 10);
   const timeUsed = GAME_DURATION_CONSTANT - timeLeft;
 
   stats.gamesPlayed++;
@@ -158,7 +165,7 @@ export function updateStats(won: boolean, score: number, promptsUsed: number) {
   }
 
   stats.lastPlayedDate = today;
-  localStore?.setItem(STATS_KEY, JSON.stringify(stats));
+  localStore?.setItem(statsKey, JSON.stringify(stats));
 }
 
 export function isValidWord(word: string): boolean {
@@ -178,6 +185,17 @@ export function isDerivative(word: string, targetWords: string[]): boolean {
   });
 }
 
+export async function fetchAIResponse(prompt: string): Promise<string> {
+  if (prompt.startsWith("echo")) {
+    return prompt.replace("echo", "").trim();
+  }
+  return await axios
+    .get("/api/airesponse", {
+      params: { prompt },
+    })
+    .then((res) => res.data.response as string);
+}
+
 export async function checkAIResponse(
   prompt: string,
   targetWords: string[],
@@ -185,17 +203,8 @@ export async function checkAIResponse(
   solvedWords: string[],
   isEasyMode: boolean
 ): Promise<AIResponse> {
-  let aiResponse = "";
   try {
-    if (prompt.startsWith("echo")) {
-      aiResponse = prompt.replace("echo", "").trim();
-    } else {
-      aiResponse = await axios
-        .get("/api/airesponse", {
-          params: { prompt },
-        })
-        .then((res) => res.data.response as string);
-    }
+    const aiResponse = await fetchAIResponse(prompt);
 
     // Call processAIResponse directly
     const result = processAIResponse(
@@ -394,7 +403,7 @@ function manualWordSets(): {
       tabooWord: "document",
     },
     "2025-04-29": {
-      targetWords: ["code", "mouse", "direction", "baby", "king"],
+      targetWords: ["code", "mouse", "ghost", "baby", "king"],
       tabooWord: "change",
     },
     "2025-04-30": {
@@ -425,9 +434,6 @@ function hashCode(str: string): number {
 function hash(seed: number, i: number): number {
   return Math.abs(((seed + i) * 2654435761) % 2 ** 32); // Knuth's multiplicative hash
 }
-
-export const MAX_PROMPTS_CONSTANT = MAX_PROMPTS;
-export const GAME_DURATION_CONSTANT = GAME_DURATION;
 
 export function getLemmas(word: string): Set<string> {
   const lemmas = new Set<string>(

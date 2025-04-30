@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { GAME_DURATION_CONSTANT, loadGameState } from "../utils";
-import { on } from "events";
-
-const TIME_LEFT_KEY = "promptl_time_left";
+import { GAME_DURATION_CONSTANT, TIME_LEFT_KEY_CONSTANT } from "../utils";
 
 interface TimerProps {
   isPaused: boolean;
   onTimeUp: () => void;
+  variant?: string; // Add variant parameter
 }
 
-export function Timer({ isPaused, onTimeUp }: TimerProps) {
+export function Timer({ isPaused, onTimeUp, variant = "v1" }: TimerProps) {
+  const timeLeftKey = `${TIME_LEFT_KEY_CONSTANT}_${variant}`;
+
   const [timeLeft, setTimeLeft] = useState(() => {
-    const savedTimeLeft = localStorage.getItem(TIME_LEFT_KEY);
+    const savedTimeLeft = localStorage.getItem(timeLeftKey);
     return savedTimeLeft ? parseInt(savedTimeLeft, 10) : GAME_DURATION_CONSTANT;
   });
 
@@ -19,7 +19,7 @@ export function Timer({ isPaused, onTimeUp }: TimerProps) {
     if (!isPaused && timeLeft > 0) {
       const intervalId = setInterval(() => {
         setTimeLeft((prevSeconds) => prevSeconds - 1000); // Decrement by 1000 ms
-        localStorage.setItem(TIME_LEFT_KEY, String(timeLeft - 1000));
+        localStorage.setItem(timeLeftKey, String(timeLeft - 1000));
         if (timeLeft <= 1000) {
           clearInterval(intervalId);
           onTimeUp(); // Call the onTimeUp function when time is up

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { X } from "lucide-react";
 
 interface HowToPlayProps {
@@ -6,6 +6,19 @@ interface HowToPlayProps {
 }
 
 export function HowToPlay({ onClose }: HowToPlayProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden h-[80%]">
@@ -60,20 +73,20 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  Start with 200 points
+                  Start with 100 points
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  -20 points for each prompt with a taboo hit
+                  -10 points for each prompt with a taboo hit
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  -10 points for each wasted prompt, i.e., without a target word
+                  -5 points for each wasted prompt, i.e., without a target word
                   hit
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  +10 points for each extra word matched in a single prompt
+                  +5 points for each extra word matched in a single prompt
                 </li>
               </ul>
             </div>
