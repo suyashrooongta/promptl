@@ -4,24 +4,24 @@ import { useState, useEffect } from "react";
 import { PENALTY_PER_TABOO_HIT_CONSTANT } from "../utils"; // Import the constant
 
 interface AIResponseProps {
-  prompt: string;
-  response: string;
+  input: string;
   matchedWords: string[];
-  matchedWordIndices: number[];
   tabooWord: string;
   tabooWordIndices: number[];
   bonusPoints: number;
+  tabooWordResponse: string;
+  targetWordResponses: { [key: string]: string };
   onClose: () => void;
 }
 
 export function AIResponse({
-  prompt,
-  response,
+  input,
   matchedWords,
-  matchedWordIndices,
   tabooWord,
   tabooWordIndices,
   bonusPoints,
+  tabooWordResponse,
+  targetWordResponses,
   onClose,
 }: AIResponseProps) {
   const [loading, setLoading] = useState(false);
@@ -44,40 +44,6 @@ export function AIResponse({
     };
   }, []);
 
-  // Split response into words and highlight matches
-  console.log("matchedWordIndices", matchedWordIndices);
-
-  const highlightMarkdown = (markdown: string) => {
-    let processedMarkdown = markdown;
-
-    // Split into words and punctuation while preserving them
-    const markdownWords = markdown.split(/(\W+)/); // Matches non-word characters (punctuation, spaces, etc.)
-
-    let wordIndex = 0; // Track non-whitespace word index
-    const highlightedWords = markdownWords.map((word) => {
-      if (!/\w/.test(word)) return word; // Skip non-word characters (punctuation, spaces)
-
-      const currentIndex = wordIndex++;
-      if (tabooWordIndices?.includes(currentIndex)) {
-        return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
-      }
-
-      if (matchedWordIndices.includes(currentIndex)) {
-        return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
-      }
-
-      return word;
-    });
-
-    processedMarkdown = highlightedWords.join("");
-
-    return marked(processedMarkdown);
-  };
-
-  const highlightedResponse = (
-    <div dangerouslySetInnerHTML={{ __html: highlightMarkdown(response) }} />
-  );
-
   const tabooHit = tabooWordIndices?.length > 0;
 
   return (
@@ -89,7 +55,7 @@ export function AIResponse({
               {" "}
               {/* Reduced size */}
               {tabooHit ? (
-                <>❌ Taboo word "{tabooWord}" was used!</>
+                <>❌ Matched taboo word "{tabooWord}"!</>
               ) : matchedWords.length > 0 ? (
                 <>
                   ✅ Matched {matchedWords.length} word
@@ -126,17 +92,35 @@ export function AIResponse({
         </div>
         <div className="p-6 space-y-6 overflow-y-auto h-[80%]">
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Prompt:
+            Your Input:
           </h3>
           <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
-            Describe {prompt}
+            Describe {input}
           </p>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              AI Response:
+              AI Responses:
             </h3>
-            <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
-              {highlightedResponse}
+            <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
+              {tabooHit
+                ? tabooWordResponse && (
+                    <div>
+                      <strong className="text-red-500">
+                        Taboo Word: "{tabooWord}"
+                      </strong>
+                      <p>{tabooWordResponse}</p>
+                    </div>
+                  )
+                : Object.entries(targetWordResponses)
+                    .filter(([word]) => matchedWords.includes(word))
+                    .map(([word, response]) => (
+                      <div key={word}>
+                        <strong className="text-green-500">
+                          Target Word: "{word}":
+                        </strong>
+                        <p>{response}</p>
+                      </div>
+                    ))}
             </div>
           </div>
         </div>

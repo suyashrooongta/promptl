@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Stats } from "../components/Stats";
 import { HowToPlay } from "../components/HowToPlay";
-import { AIResponse } from "../components/AIResponse";
+import { AIResponse } from "../components/AIResponseV2";
 import { GameState } from "../types";
 import { Timer } from "../components/Timer";
 import { differenceInSeconds, startOfTomorrow } from "date-fns";
@@ -20,6 +20,8 @@ import {
   saveGameState,
   BASE_SCORE_CONSTANT,
   clearTimeLeft,
+  PENALTY_PER_TABOO_HIT_CONSTANT,
+  checkWordInAIResponses,
 } from "../utils";
 import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
@@ -33,7 +35,7 @@ const GAME_VARIANT = "v2";
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const data = getGameData(new Date());
+    const data = getGameData(new Date(), GAME_VARIANT);
     return {
       ...data,
       solvedWords: [],
@@ -46,7 +48,7 @@ export default function Home() {
       matchedWords: {},
       matchedWordIndices: {},
       bonusPoints: {},
-      tabooWordIndex: {},
+      tabooWordIndices: {},
     };
   });
 
@@ -217,12 +219,10 @@ export default function Home() {
       isPaused: true, // Pause the game when a prompt is submitted
     }));
     try {
-      const result = await checkAIResponse(
+      const result = checkWordInAIResponses(
         word,
-        gameState.targetWords,
-        gameState.tabooWord,
-        gameState.solvedWords,
-        gameState.isEasyMode
+        gameState.targetWordResponses || {},
+        gameState.tabooWordResponse || ""
       );
 
       const newSolvedWords = [
@@ -237,7 +237,7 @@ export default function Home() {
           ? 0
           : calculateScore(
               [...prev.prompts, word],
-              { ...prev.tabooWordIndex, [word]: result.tabooWordIndex },
+              { ...prev.tabooWordIndices, [word]: result.tabooWordIndices },
               { ...prev.matchedWords, [word]: result.matchedWords },
               { ...prev.bonusPoints, [word]: result.bonusPoints }
             );
@@ -257,16 +257,11 @@ export default function Home() {
           solvedWords: newSolvedWords,
           isGameOver: isGameWon || isGameLost,
           score: newScore,
-          aiResponses: { ...prev.aiResponses, [word]: result.response },
           matchedWords: { ...prev.matchedWords, [word]: result.matchedWords },
-          matchedWordIndices: {
-            ...prev.matchedWordIndices,
-            [word]: result.matchedWordIndices,
-          },
           bonusPoints: { ...prev.bonusPoints, [word]: result.bonusPoints },
-          tabooWordIndex: {
-            ...prev.tabooWordIndex,
-            [word]: result.tabooWordIndex,
+          tabooWordIndices: {
+            ...prev.tabooWordIndices,
+            [word]: result.tabooWordIndices,
           },
         };
       });
@@ -480,7 +475,7 @@ export default function Home() {
                     className={`px-4 py-2 rounded-xl transition-all hover:scale-105 ${
                       gameState.matchedWords[p]?.length > 0
                         ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800"
-                        : gameState.tabooWordIndex[p] !== -1
+                        : gameState.tabooWordIndices[p]?.length > 0
                         ? "bg-gradient-to-r from-red-100 to-red-200 text-red-800"
                         : "bg-black-200 text-gray-800"
                     }`}
@@ -491,9 +486,9 @@ export default function Home() {
                         +{gameState.bonusPoints[p]}
                       </span>
                     )}
-                    {gameState.tabooWordIndex[p] !== -1 && (
+                    {gameState.tabooWordIndices[p]?.length > 0 && (
                       <span className="ml-2 text-xs font-bold text-red-600">
-                        -20
+                        -{PENALTY_PER_TABOO_HIT_CONSTANT}
                       </span>
                     )}
                   </button>
@@ -523,13 +518,13 @@ export default function Home() {
 
           {!showStats && showAIResponse && selectedPrompt && (
             <AIResponse
-              prompt={selectedPrompt}
-              response={gameState.aiResponses[selectedPrompt]}
+              input={selectedPrompt}
               matchedWords={gameState.matchedWords[selectedPrompt]}
-              matchedWordIndices={gameState.matchedWordIndices[selectedPrompt]}
               tabooWord={gameState.tabooWord}
-              tabooWordIndex={gameState.tabooWordIndex[selectedPrompt]}
+              tabooWordIndices={gameState.tabooWordIndices[selectedPrompt]}
               bonusPoints={gameState.bonusPoints[selectedPrompt] || 0}
+              tabooWordResponse={gameState.tabooWordResponse || ""}
+              targetWordResponses={gameState.targetWordResponses || {}}
               onClose={() => {
                 setShowAIResponse(false);
                 setSelectedPrompt(null);

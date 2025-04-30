@@ -19,6 +19,7 @@ import {
   saveGameState,
   BASE_SCORE_CONSTANT,
   clearTimeLeft,
+  PENALTY_PER_TABOO_HIT_CONSTANT,
 } from "../utils";
 import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
@@ -32,7 +33,7 @@ const GAME_VARIANT = "v1";
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const data = getGameData(new Date());
+    const data = getGameData(new Date(), GAME_VARIANT);
     return {
       ...data,
       solvedWords: [],
@@ -45,7 +46,7 @@ export default function Home() {
       matchedWords: {},
       matchedWordIndices: {},
       bonusPoints: {},
-      tabooWordIndex: {},
+      tabooWordIndices: {},
     };
   });
 
@@ -189,7 +190,7 @@ export default function Home() {
           ? 0
           : calculateScore(
               [...prev.prompts, word],
-              { ...prev.tabooWordIndex, [word]: result.tabooWordIndex },
+              { ...prev.tabooWordIndices, [word]: result.tabooWordIndices },
               { ...prev.matchedWords, [word]: result.matchedWords },
               { ...prev.bonusPoints, [word]: result.bonusPoints }
             );
@@ -216,9 +217,9 @@ export default function Home() {
             [word]: result.matchedWordIndices,
           },
           bonusPoints: { ...prev.bonusPoints, [word]: result.bonusPoints },
-          tabooWordIndex: {
-            ...prev.tabooWordIndex,
-            [word]: result.tabooWordIndex,
+          tabooWordIndices: {
+            ...prev.tabooWordIndices,
+            [word]: result.tabooWordIndices,
           },
         };
       });
@@ -432,7 +433,7 @@ export default function Home() {
                     className={`px-4 py-2 rounded-xl transition-all hover:scale-105 ${
                       gameState.matchedWords[p]?.length > 0
                         ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800"
-                        : gameState.tabooWordIndex[p] !== -1
+                        : gameState.tabooWordIndices[p]?.length > 0
                         ? "bg-gradient-to-r from-red-100 to-red-200 text-red-800"
                         : "bg-black-200 text-gray-800"
                     }`}
@@ -443,9 +444,9 @@ export default function Home() {
                         +{gameState.bonusPoints[p]}
                       </span>
                     )}
-                    {gameState.tabooWordIndex[p] !== -1 && (
+                    {gameState.tabooWordIndices[p]?.length > 0 && (
                       <span className="ml-2 text-xs font-bold text-red-600">
-                        -20
+                        -{PENALTY_PER_TABOO_HIT_CONSTANT}
                       </span>
                     )}
                   </button>
@@ -480,7 +481,7 @@ export default function Home() {
               matchedWords={gameState.matchedWords[selectedPrompt]}
               matchedWordIndices={gameState.matchedWordIndices[selectedPrompt]}
               tabooWord={gameState.tabooWord}
-              tabooWordIndex={gameState.tabooWordIndex[selectedPrompt]}
+              tabooWordIndices={gameState.tabooWordIndices[selectedPrompt]}
               bonusPoints={gameState.bonusPoints[selectedPrompt] || 0}
               onClose={() => {
                 setShowAIResponse(false);

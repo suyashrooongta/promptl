@@ -10,6 +10,8 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 
+let systemMessageSent = false; // Track if the system message has been sent
+
 export async function fetchAIResponse(prompt: string): Promise<string> {
   try {
     const existingResponse = await prisma.aiResponse.findUnique({
@@ -22,14 +24,26 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
     }
 
     // If the response is not in the database, call OpenAI API
+    const messages: {
+      role: "system" | "user" | "assistant";
+      content: string;
+    }[] = [];
+    if (!systemMessageSent) {
+      messages.push({
+        role: "system",
+        content:
+          "You are a helpful assistant. Your task is to provide concise and accurate descriptions of topics. Please respond in a clear and informative manner. Do not autocorrect the prompt.",
+      });
+      systemMessageSent = true; // Mark the system message as sent
+    }
+    messages.push({
+      role: "user",
+      content: `Describe ${prompt} in 100 words or less`,
+    });
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: `Describe ${prompt} in 100 words or less`,
-        },
-      ],
+      messages: messages,
       temperature: 0,
       max_tokens: 300,
     });

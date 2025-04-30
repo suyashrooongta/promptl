@@ -30,7 +30,7 @@ interface DailyWords {
   [date: string]: GameData;
 }
 
-export function getGameData(date: Date): GameData {
+export function getGameData(date: Date, variant: String): GameData {
   const dateString = format(date, "yyyy-MM-dd");
   const savedWords = wordSets;
 
@@ -38,7 +38,7 @@ export function getGameData(date: Date): GameData {
     return { ...savedWords[dateString], gameDate: dateString };
   }
   // Fall back to random selection
-  const seed = hashCode(dateString);
+  const seed = hashCode(dateString + variant);
 
   const targetWords = [];
   const used = new Set<number>();
@@ -64,12 +64,12 @@ export function getGameData(date: Date): GameData {
   };
 }
 
-export function saveGameState(state: GameState, variant: String = "v1"): void {
+export function saveGameState(state: GameState, variant: String): void {
   const gameStateKey = `${GAME_STATE_KEY}_${variant}`;
   localStore?.setItem(gameStateKey, JSON.stringify(state));
 }
 
-export function loadGameState(variant: String = "v1"): GameState | null {
+export function loadGameState(variant: String): GameState | null {
   const gameStateKey = `${GAME_STATE_KEY}_${variant}`;
   const savedState = localStore?.getItem(gameStateKey);
   if (!savedState) return null;
@@ -81,14 +81,14 @@ export function loadGameState(variant: String = "v1"): GameState | null {
   return state;
 }
 
-export function clearTimeLeft(variant: String = "v1"): void {
+export function clearTimeLeft(variant: String): void {
   const timeLeftKey = `${TIME_LEFT_KEY_CONSTANT}_${variant}`;
   localStore?.removeItem(timeLeftKey);
 }
 
 export function calculateScore(
   prompts: string[],
-  tabooWordIndex: { [key: string]: number },
+  tabooWordIndices: { [key: string]: number[] },
   matchedWords: { [key: string]: string[] },
   bonusPoints: { [key: string]: number }
 ): number {
@@ -96,12 +96,12 @@ export function calculateScore(
 
   // Count penalties (no matches or taboo hits)
   const tabooPrompts = prompts.filter(
-    (prompt) => tabooWordIndex[prompt] !== -1
+    (prompt) => tabooWordIndices[prompt]?.length > 0
   );
   score -= tabooPrompts.length * PENALTY_PER_TABOO_HIT_CONSTANT;
   const wastedPrompts = prompts.filter(
     (prompt) =>
-      tabooWordIndex[prompt] === -1 &&
+      !(tabooWordIndices[prompt]?.length > 0) &&
       (!matchedWords[prompt] || matchedWords[prompt].length === 0)
   );
   score -= wastedPrompts.length * PENALTY_PER_WASTED_PROMPT;
@@ -112,7 +112,7 @@ export function calculateScore(
   return Math.max(0, score);
 }
 
-export function getStats(variant: string = "v1"): PlayerStats {
+export function getStats(variant: string): PlayerStats {
   const defaultStats: PlayerStats = {
     gamesPlayed: 0,
     gamesWon: 0,
@@ -133,13 +133,13 @@ export function updateStats(
   won: boolean,
   score: number,
   promptsUsed: number,
-  variant: string = "v1" // Added variant as a parameter with default value
+  variant: string // Added variant as a parameter with default value
 ) {
   const statsKey = `${STATS_KEY}_${variant}`;
   const timeLeftKey = `${TIME_LEFT_KEY_CONSTANT}_${variant}`;
   const stats = localStore?.getItem(statsKey)
     ? JSON.parse(localStore.getItem(statsKey)!)
-    : getStats();
+    : getStats(variant);
   const today = format(new Date(), "yyyy-MM-dd");
 
   // Read timeLeft from localStorage and calculate timeUsed
@@ -224,7 +224,7 @@ export async function checkAIResponse(
     return {
       response: aiResponse,
       matchedWords: result.matchedWords,
-      tabooWordIndex: result.tabooWordIndex,
+      tabooWordIndices: result.tabooWordIndices, // Updated to use tabooWordIndices
       bonusPoints,
       matchedWordIndices: result.matchedWordIndices,
     };
@@ -242,13 +242,14 @@ export function processAIResponse(
 ): {
   matchedWords: string[];
   matchedWordIndices: number[];
-  tabooWordIndex: number;
+  tabooWordIndices: number[]; // Updated to return all indices
 } {
   // Split response into words using a regex to match non-alphanumeric characters
   const words = aiResponse.split(/\W+/).filter(Boolean); // Filter out empty strings
   const matchedWords: string[] = [];
   const matchedWordIndices: number[] = [];
   const targetWordLemmasMap = preprocessTargetWords(targetWords);
+  const tabooWordIndices: number[] = []; // Collect all taboo word indices
 
   for (let index = 0; index < words.length; index++) {
     const cleanWord = words[index].toLowerCase();
@@ -267,18 +268,14 @@ export function processAIResponse(
         index
       )
     ) {
-      return {
-        matchedWords: [],
-        matchedWordIndices: [],
-        tabooWordIndex: index,
-      };
+      tabooWordIndices.push(index); // Add index to tabooWordIndices
     }
   }
 
   return {
     matchedWords,
     matchedWordIndices,
-    tabooWordIndex: -1,
+    tabooWordIndices, // Return all taboo word indices
   };
 }
 
@@ -401,4 +398,72 @@ export function addMatch(
     matchedWords.push(target);
   }
   matchedWordIndices.push(index);
+}
+
+export function checkWordInAIResponses(
+  inputWord: string,
+  targetWordResponses: { [key: string]: string },
+  tabooAIResponse: string
+): {
+  matchedWords: string[];
+  tabooHit: boolean;
+  matchedIndices: { [key: string]: number[] };
+  tabooWordIndices: number[];
+  bonusPoints: number;
+} {
+  const matchedWords: string[] = [];
+  const matchedIndices: { [key: string]: number[] } = {};
+  const inputWordLemmas = getLemmas(inputWord.toLowerCase());
+  const tabooWordIndices: number[] = [];
+
+  // Check for taboo matches
+  const tabooWords = tabooAIResponse.split(/\W+/).filter(Boolean); // Split taboo response into words
+  tabooWords.forEach((word, index) => {
+    if (
+      [...getLemmas(word.toLowerCase())].some((lemma) =>
+        inputWordLemmas.has(lemma)
+      )
+    ) {
+      tabooWordIndices.push(index);
+    }
+  });
+
+  if (tabooWordIndices.length > 0) {
+    return {
+      matchedWords: [],
+      tabooHit: true,
+      matchedIndices: {},
+      tabooWordIndices,
+      bonusPoints: 0,
+    };
+  }
+
+  // Check for matches in target word responses
+  Object.entries(targetWordResponses).forEach(([targetWord, response]) => {
+    const responseWords = response.split(/\W+/).filter(Boolean); // Split response into words
+    responseWords.forEach((word, index) => {
+      if (
+        [...getLemmas(word.toLowerCase())].some((lemma) =>
+          inputWordLemmas.has(lemma)
+        )
+      ) {
+        if (!matchedWords.includes(targetWord)) {
+          matchedWords.push(targetWord);
+          matchedIndices[targetWord] = []; // Initialize array for this target word
+        }
+        matchedIndices[targetWord].push(index);
+      }
+    });
+  });
+
+  return {
+    matchedWords,
+    tabooHit: false,
+    matchedIndices,
+    tabooWordIndices,
+    bonusPoints:
+      matchedWords.length > 1
+        ? (matchedWords.length - 1) * BONUS_PER_EXTRA_WORD
+        : 0,
+  };
 }
