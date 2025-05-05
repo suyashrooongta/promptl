@@ -469,6 +469,7 @@ export default function Home() {
                 setShowStats(false);
               }}
               gameState={gameState}
+              variant={GAME_VARIANT}
             />
           )}
 

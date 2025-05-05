@@ -94,9 +94,7 @@ export function AIResponse({
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Your Input:
           </h3>
-          <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
-            Describe {input}
-          </p>
+          <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{input}</p>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               AI Responses:
@@ -105,9 +103,7 @@ export function AIResponse({
               {tabooHit
                 ? tabooWordResponse && (
                     <div>
-                      <strong className="text-red-500">
-                        Taboo Word: "{tabooWord}"
-                      </strong>
+                      <strong className="text-red-500">"{tabooWord}"</strong>
                       <p>{tabooWordResponse}</p>
                     </div>
                   )
@@ -115,9 +111,7 @@ export function AIResponse({
                     .filter(([word]) => matchedWords.includes(word))
                     .map(([word, response]) => (
                       <div key={word}>
-                        <strong className="text-green-500">
-                          Target Word: "{word}":
-                        </strong>
+                        <strong className="text-green-500">"{word}":</strong>
                         <p>{response}</p>
                       </div>
                     ))}

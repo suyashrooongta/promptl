@@ -221,7 +221,11 @@ export default function Home() {
     try {
       const result = checkWordInAIResponses(
         word,
-        gameState.targetWordResponses || {},
+        Object.fromEntries(
+          Object.entries(gameState.targetWordResponses || {}).filter(
+            ([key]) => !gameState.solvedWords.includes(key)
+          )
+        ),
         gameState.tabooWordResponse || ""
       );
 
@@ -511,6 +515,7 @@ export default function Home() {
                 setShowStats(false);
               }}
               gameState={gameState}
+              variant={GAME_VARIANT}
             />
           )}
 
