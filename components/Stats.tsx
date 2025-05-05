@@ -119,9 +119,6 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
           )}
           {showGameresponses ? (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                AI Responses
-              </h3>
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
                 {gameState?.tabooWordResponse && (
                   <div>
