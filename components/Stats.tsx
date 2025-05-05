@@ -120,14 +120,6 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
           {showGameresponses ? (
             <div className="mt-6">
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
-                {gameState?.tabooWordResponse && (
-                  <div>
-                    <strong className="text-red-500">
-                      Taboo word: "{gameState?.tabooWord}"
-                    </strong>
-                    <p>{gameState?.tabooWordResponse}</p>
-                  </div>
-                )}
                 {Object.entries(gameState?.targetWordResponses || {}).map(
                   ([word, response]) => (
                     <div key={word}>
@@ -137,6 +129,14 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
                       <p>{response}</p>
                     </div>
                   )
+                )}
+                {gameState?.tabooWordResponse && (
+                  <div>
+                    <strong className="text-red-500">
+                      Taboo word: "{gameState?.tabooWord}"
+                    </strong>
+                    <p>{gameState?.tabooWordResponse}</p>
+                  </div>
                 )}
               </div>
             </div>
