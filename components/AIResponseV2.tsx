@@ -92,31 +92,33 @@ export function AIResponse({
         </div>
         <div className="p-6 space-y-6 overflow-y-auto h-[80%]">
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Input:
+            Your Input
           </h3>
           <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{input}</p>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              AI Responses:
-            </h3>
-            <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
-              {tabooHit
-                ? tabooWordResponse && (
-                    <div>
-                      <strong className="text-red-500">"{tabooWord}"</strong>
-                      <p>{tabooWordResponse}</p>
-                    </div>
-                  )
-                : Object.entries(targetWordResponses)
-                    .filter(([word]) => matchedWords.includes(word))
-                    .map(([word, response]) => (
-                      <div key={word}>
-                        <strong className="text-green-500">"{word}":</strong>
-                        <p>{response}</p>
+          {(tabooHit || matchedWords.length > 0) && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                AI Responses
+              </h3>
+              <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
+                {tabooHit
+                  ? tabooWordResponse && (
+                      <div>
+                        <strong className="text-red-500">"{tabooWord}"</strong>
+                        <p>{tabooWordResponse}</p>
                       </div>
-                    ))}
+                    )
+                  : Object.entries(targetWordResponses)
+                      .filter(([word]) => matchedWords.includes(word))
+                      .map(([word, response]) => (
+                        <div key={word}>
+                          <strong className="text-green-500">"{word}":</strong>
+                          <p>{response}</p>
+                        </div>
+                      ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

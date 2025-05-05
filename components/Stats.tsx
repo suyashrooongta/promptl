@@ -118,7 +118,7 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
             </div>
           )}
           {showGameresponses ? (
-            <div className="mt-6">
+            <div className="mt-6 mb-4">
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
                 {Object.entries(gameState?.targetWordResponses || {}).map(
                   ([word, response]) => (
@@ -143,7 +143,7 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
           ) : (
             <>
               {/* Streak Stats */}
-              <div className="mt-6 p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+              <div className="mt-6 mb-4 p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
                 <div className="flex items-center justify-center gap-10">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-purple-600">

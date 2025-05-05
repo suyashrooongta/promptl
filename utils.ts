@@ -411,6 +411,9 @@ export function checkWordInAIResponses(
   tabooWordIndices: number[];
   bonusPoints: number;
 } {
+  if (inputWord.startsWith("echo")) {
+    inputWord = inputWord.replace("echo", "").trim();
+  }
   const matchedWords: string[] = [];
   const matchedIndices: { [key: string]: number[] } = {};
   const inputWordLemmas = getLemmas(inputWord.toLowerCase());

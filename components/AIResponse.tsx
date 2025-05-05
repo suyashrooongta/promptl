@@ -126,14 +126,14 @@ export function AIResponse({
         </div>
         <div className="p-6 space-y-6 overflow-y-auto h-[80%]">
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Prompt:
+            Your Prompt
           </h3>
           <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
             Describe {prompt}
           </p>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              AI Response:
+              AI Response
             </h3>
             <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
               {highlightedResponse}
