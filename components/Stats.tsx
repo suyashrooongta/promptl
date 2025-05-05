@@ -94,19 +94,33 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
             </div>
           )}
           {variant === "v2" && gameState?.isGameOver && (
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-2 mb-2">
               <button
-                onClick={() => setShowGameresponses(!showGameresponses)}
-                className="py-2 px-6  bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 font-medium text-sm"
+                onClick={() => setShowGameresponses(false)}
+                className={`py-2 px-6 rounded-t-md font-medium text-sm ${
+                  !showGameresponses
+                    ? "bg-indigo-500 text-white"
+                    : "bg-indigo-100 text-gray-600"
+                }`}
               >
-                {showGameresponses ? "Hide AI responses" : "Show AI responses"}
+                Stats
+              </button>
+              <button
+                onClick={() => setShowGameresponses(true)}
+                className={`py-2 px-6 rounded-t-md font-medium text-sm ${
+                  showGameresponses
+                    ? "bg-indigo-500 text-white"
+                    : "bg-indigo-100 text-gray-600"
+                }`}
+              >
+                AI Responses
               </button>
             </div>
           )}
           {showGameresponses ? (
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                AI Responses:
+                AI Responses
               </h3>
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
                 {gameState?.tabooWordResponse && (
