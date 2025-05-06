@@ -120,6 +120,23 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
           {showGameresponses ? (
             <div className="mt-6 mb-4">
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
+                {gameState?.frequentLemmas && (
+                  <div className="mt-4">
+                    <strong className="text-blue-500">
+                      Possible User Inputs:
+                    </strong>
+                    <ul className="list-disc list-inside text-gray-600">
+                      {Object.entries(gameState.frequentLemmas).map(
+                        ([lemma, targetWords]) => (
+                          <li key={lemma}>
+                            <strong className="text-gray-800">{lemma}</strong>:{" "}
+                            {targetWords.join(", ")}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                )}
                 {Object.entries(gameState?.targetWordResponses || {}).map(
                   ([word, response]) => (
                     <div key={word}>

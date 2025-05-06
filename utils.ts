@@ -12,6 +12,10 @@ import { lemmatizer as baseLemmatizer } from "lemmatizer";
 import { format } from "date-fns";
 import axios from "axios";
 import { wordSets } from "./data/wordSets";
+import nlp from "compromise";
+
+// @ts-ignore
+import pennTags from "compromise-penn-tags";
 
 export const IS_SERVER = typeof window === "undefined";
 export const localStore = IS_SERVER ? undefined : localStorage;
@@ -299,14 +303,22 @@ function hash(seed: number, i: number): number {
   return Math.abs(((seed + i) * 2654435761) % 2 ** 32); // Knuth's multiplicative hash
 }
 
+const lemmasCache = new Map<string, Set<string>>(); // Cache to store results
+
 export function getLemmas(word: string): Set<string> {
+  // Check if the result is already in the cache
+  if (lemmasCache.has(word)) {
+    return lemmasCache.get(word)!; // Return cached result
+  }
+
+  // Calculate lemmas if not cached
   const lemmas = new Set<string>(
     [
       lemmatizer.noun(word),
       lemmatizer.verb(word),
       lemmatizer.adjective(word),
-    ].filter(Boolean)
-  ); // Remove undefined values
+    ].filter(Boolean) // Remove undefined values
+  );
 
   lemmas.add(stemmer(word)); // Add stemmed form
   lemmas.add(word); // Add original word
@@ -332,6 +344,9 @@ export function getLemmas(word: string): Set<string> {
       }
     }
   }
+
+  // Store the result in the cache
+  lemmasCache.set(word, lemmas);
 
   return lemmas;
 }
@@ -469,4 +484,88 @@ export function checkWordInAIResponses(
         ? (matchedWords.length - 1) * BONUS_PER_EXTRA_WORD
         : 0,
   };
+}
+
+export function getPennPosTag(text: string): string {
+  nlp.extend(pennTags);
+
+  const doc = nlp(text);
+  doc.compute("penn");
+
+  // Accessing the Penn POS tag of the first term
+  const firstTerm = doc.json()[0]?.terms?.[0];
+  return firstTerm ? firstTerm.penn : "";
+}
+
+export function getMostFrequentLemmas(
+  tabooResponse: string,
+  targetResponses: { [key: string]: string }
+): { [key: string]: string[] } {
+  const tabooLemmas = new Set<string>();
+  const lemmaFrequency: Map<string, Set<string>> = new Map(); // Map lemma to target words
+
+  // Process taboo response
+  tabooResponse
+    .split(/\W+/)
+    .filter(Boolean)
+    .forEach((word) => {
+      getLemmas(word.toLowerCase()).forEach((lemma) => tabooLemmas.add(lemma));
+    });
+
+  // Process target responses
+  Object.entries(targetResponses).forEach(([targetWord, response]) => {
+    const responseLemmas = new Set<string>();
+    response
+      .split(/\W+/)
+      .filter(Boolean)
+      .forEach((word) => {
+        getLemmas(word.toLowerCase()).forEach((lemma) => {
+          if (!tabooLemmas.has(lemma) && wordList.includes(lemma)) {
+            // Filter lemmas not in word list
+            responseLemmas.add(lemma);
+          }
+        });
+      });
+
+    // Update lemma frequency with the target word
+    responseLemmas.forEach((lemma) => {
+      if (!lemmaFrequency.has(lemma)) {
+        lemmaFrequency.set(lemma, new Set());
+      }
+      lemmaFrequency.get(lemma)!.add(targetWord);
+    });
+  });
+
+  // Transform the result into the desired format
+  return [...lemmaFrequency.entries()]
+    .filter(([lemma, targetWords]) => {
+      const posTag = getPennPosTag(lemma);
+      return (
+        targetWords.size >= 2 &&
+        lemma.length > 3 &&
+        (posTag.startsWith("NN") ||
+          posTag.startsWith("JJ") ||
+          posTag.startsWith("VB")) &&
+        [...targetWords].some((targetWord) => {
+          const targetResponseWords =
+            targetResponses[targetWord]
+              ?.split(/\W+/)
+              .map((word) => word.toLowerCase()) || [];
+          return targetResponseWords.includes(lemma);
+        })
+      );
+    })
+    .sort((a, b) => {
+      // Sort by the number of target words (descending), then by lemma length (ascending)
+      const targetWordCountDiff = b[1].size - a[1].size;
+      if (targetWordCountDiff !== 0) {
+        return targetWordCountDiff;
+      }
+      return a[0].length - b[0].length;
+    })
+    .slice(0, 10) // Limit to top 5 frequent lemmas
+    .reduce((result, [lemma, targetWords]) => {
+      result[lemma] = [...targetWords];
+      return result;
+    }, {} as { [key: string]: string[] });
 }

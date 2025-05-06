@@ -15,13 +15,13 @@ import {
   isValidWord,
   isDerivative,
   fetchAIResponse,
-  checkAIResponse,
   loadGameState,
   saveGameState,
   BASE_SCORE_CONSTANT,
   clearTimeLeft,
   PENALTY_PER_TABOO_HIT_CONSTANT,
   checkWordInAIResponses,
+  getMostFrequentLemmas,
 } from "../utils";
 import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
@@ -113,16 +113,19 @@ export default function Home() {
             const tabooResponse = await retryFetch(() =>
               fetchAIResponse(gameState.tabooWord)
             );
+            const targetWordResponses = Object.fromEntries(
+              gameState.targetWords.map((word, i) => [word, targetResponses[i]])
+            );
+            const frequentLemmas = getMostFrequentLemmas(
+              tabooResponse || "",
+              targetWordResponses
+            );
 
             setGameState((prev) => ({
               ...prev,
-              targetWordResponses: Object.fromEntries(
-                gameState.targetWords.map((word, i) => [
-                  word,
-                  targetResponses[i],
-                ])
-              ),
+              targetWordResponses,
               tabooWordResponse: tabooResponse,
+              frequentLemmas,
             }));
           } catch (err) {
             console.error(
@@ -266,6 +269,10 @@ export default function Home() {
           tabooWordIndices: {
             ...prev.tabooWordIndices,
             [word]: result.tabooWordIndices,
+          },
+          matchedIndices: {
+            ...prev.matchedIndices,
+            [word]: result.matchedIndices,
           },
         };
       });
@@ -530,6 +537,7 @@ export default function Home() {
               bonusPoints={gameState.bonusPoints[selectedPrompt] || 0}
               tabooWordResponse={gameState.tabooWordResponse || ""}
               targetWordResponses={gameState.targetWordResponses || {}}
+              matchedIndices={gameState.matchedIndices?.[selectedPrompt] || {}}
               onClose={() => {
                 setShowAIResponse(false);
                 setSelectedPrompt(null);
