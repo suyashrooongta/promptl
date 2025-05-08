@@ -1,5 +1,5 @@
 import { GameData, PlayerStats, AIResponse, GameState } from "./types";
-import { allTargetWords } from "./data/words";
+import { allTargetWords, allTargetWordsV2 } from "./data/words";
 // @ts-ignore
 import wordList from "word-list-json";
 // @ts-ignore
@@ -46,15 +46,19 @@ export function getGameData(date: Date, variant: String): GameData {
 
   const targetWords = [];
   const used = new Set<number>();
+  const targetWordList = (
+    variant === "v2" ? allTargetWordsV2 : allTargetWords
+  ).filter((word) => word.length > 3);
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; targetWords.length < 6; i++) {
     let index;
-    do {
-      index = hash(seed, i) % allTargetWords.length;
-      // Ensure the index is unique
-    } while (used.has(index));
+    index = hash(seed, i) % targetWordList.length;
+    // Ensure the index is unique
+    if (used.has(index)) {
+      continue; // Skip if the index is already used
+    }
     used.add(index);
-    targetWords.push(allTargetWords[index]);
+    targetWords.push(targetWordList[index]);
   }
 
   // Use one of the selected words as the taboo word
@@ -300,7 +304,7 @@ function hashCode(str: string): number {
 }
 
 function hash(seed: number, i: number): number {
-  return Math.abs(((seed + i) * 2654435761) % 2 ** 32); // Knuth's multiplicative hash
+  return Math.abs(((seed + i) * 265451) % 2 ** 32);
 }
 
 const lemmasCache = new Map<string, Set<string>>(); // Cache to store results
@@ -503,6 +507,17 @@ export function getMostFrequentLemmas(
 ): { [key: string]: string[] } {
   const tabooLemmas = new Set<string>();
   const lemmaFrequency: Map<string, Set<string>> = new Map(); // Map lemma to target words
+  const excludedWords = new Set([
+    "include",
+    "including",
+    "like",
+    "have",
+    "play",
+    "crucial",
+    "role",
+    "range",
+    "refers",
+  ]);
 
   // Process taboo response
   tabooResponse
@@ -520,8 +535,11 @@ export function getMostFrequentLemmas(
       .filter(Boolean)
       .forEach((word) => {
         getLemmas(word.toLowerCase()).forEach((lemma) => {
-          if (!tabooLemmas.has(lemma) && wordList.includes(lemma)) {
-            // Filter lemmas not in word list
+          if (
+            !tabooLemmas.has(lemma) &&
+            wordList.includes(lemma) &&
+            !excludedWords.has(lemma) // Exclude specific words
+          ) {
             responseLemmas.add(lemma);
           }
         });

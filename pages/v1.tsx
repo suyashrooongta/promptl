@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Stats } from "../components/Stats";
 import { HowToPlay } from "../components/HowToPlay";
-import { AIResponse } from "../components/AIResponseV2";
+import { AIResponse } from "../components/AIResponse";
 import { GameState } from "../types";
 import { Timer } from "../components/Timer";
 import { differenceInSeconds, startOfTomorrow } from "date-fns";
@@ -14,14 +14,12 @@ import {
   MAX_PROMPTS_CONSTANT,
   isValidWord,
   isDerivative,
-  fetchAIResponse,
+  checkAIResponse,
   loadGameState,
   saveGameState,
   BASE_SCORE_CONSTANT,
   clearTimeLeft,
   PENALTY_PER_TABOO_HIT_CONSTANT,
-  checkWordInAIResponses,
-  getMostFrequentLemmas,
 } from "../utils";
 import { HelpCircle, BarChart2, Send, LoaderCircle } from "lucide-react";
 
@@ -31,7 +29,7 @@ enum GameStatus {
   GAME_OVER = "GAME_OVER",
 }
 
-const GAME_VARIANT = "v2";
+const GAME_VARIANT = "v1";
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -89,56 +87,6 @@ export default function Home() {
         }
       } else {
         clearTimeLeft(GAME_VARIANT);
-        // Fetch AI responses for target and taboo words
-        const fetchAIResponses = async () => {
-          const retryFetch = async (
-            fetchFn: () => Promise<any>,
-            retries = 3
-          ): Promise<any> => {
-            for (let attempt = 1; attempt <= retries; attempt++) {
-              try {
-                return await fetchFn();
-              } catch (err) {
-                if (attempt === retries) throw err;
-              }
-            }
-          };
-
-          try {
-            const targetResponses = await Promise.all(
-              gameState.targetWords.map((word) =>
-                retryFetch(() => fetchAIResponse(word))
-              )
-            );
-            const tabooResponse = await retryFetch(() =>
-              fetchAIResponse(gameState.tabooWord)
-            );
-            const targetWordResponses = Object.fromEntries(
-              gameState.targetWords.map((word, i) => [word, targetResponses[i]])
-            );
-            const frequentLemmas = getMostFrequentLemmas(
-              tabooResponse || "",
-              targetWordResponses
-            );
-
-            setGameState((prev) => ({
-              ...prev,
-              targetWordResponses,
-              tabooWordResponse: tabooResponse,
-              frequentLemmas,
-            }));
-          } catch (err) {
-            console.error(
-              "Failed to fetch AI responses for target/taboo words after retries:",
-              err
-            );
-            setError(
-              "Failed to fetch AI responses. Please refresh and try again."
-            );
-          }
-        };
-
-        fetchAIResponses();
       }
       setShowStartScreen(true); // Always show the start screen
     }
@@ -222,14 +170,12 @@ export default function Home() {
       isPaused: true, // Pause the game when a prompt is submitted
     }));
     try {
-      const result = checkWordInAIResponses(
+      const result = await checkAIResponse(
         word,
-        Object.fromEntries(
-          Object.entries(gameState.targetWordResponses || {}).filter(
-            ([key]) => !gameState.solvedWords.includes(key)
-          )
-        ),
-        gameState.tabooWordResponse || ""
+        gameState.targetWords,
+        gameState.tabooWord,
+        gameState.solvedWords,
+        gameState.isEasyMode
       );
 
       const newSolvedWords = [
@@ -264,15 +210,16 @@ export default function Home() {
           solvedWords: newSolvedWords,
           isGameOver: isGameWon || isGameLost,
           score: newScore,
+          aiResponses: { ...prev.aiResponses, [word]: result.response },
           matchedWords: { ...prev.matchedWords, [word]: result.matchedWords },
+          matchedWordIndices: {
+            ...prev.matchedWordIndices,
+            [word]: result.matchedWordIndices,
+          },
           bonusPoints: { ...prev.bonusPoints, [word]: result.bonusPoints },
           tabooWordIndices: {
             ...prev.tabooWordIndices,
             [word]: result.tabooWordIndices,
-          },
-          matchedIndices: {
-            ...prev.matchedIndices,
-            [word]: result.matchedIndices,
           },
         };
       });
@@ -530,14 +477,13 @@ export default function Home() {
 
           {!showStats && showAIResponse && selectedPrompt && (
             <AIResponse
-              input={selectedPrompt}
+              prompt={selectedPrompt}
+              response={gameState.aiResponses[selectedPrompt]}
               matchedWords={gameState.matchedWords[selectedPrompt]}
+              matchedWordIndices={gameState.matchedWordIndices[selectedPrompt]}
               tabooWord={gameState.tabooWord}
               tabooWordIndices={gameState.tabooWordIndices[selectedPrompt]}
               bonusPoints={gameState.bonusPoints[selectedPrompt] || 0}
-              tabooWordResponse={gameState.tabooWordResponse || ""}
-              targetWordResponses={gameState.targetWordResponses || {}}
-              matchedIndices={gameState.matchedIndices?.[selectedPrompt] || {}}
               onClose={() => {
                 setShowAIResponse(false);
                 setSelectedPrompt(null);

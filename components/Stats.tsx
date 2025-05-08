@@ -122,9 +122,7 @@ export function Stats({ stats, onClose, gameState, variant }: StatsProps) {
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
                 {gameState?.frequentLemmas && (
                   <div className="mt-4">
-                    <strong className="text-blue-500">
-                      Possible User Inputs:
-                    </strong>
+                    <strong className="text-blue-500">Possible Guesses:</strong>
                     <ul className="list-disc list-inside text-gray-600">
                       {Object.entries(gameState.frequentLemmas).map(
                         ([lemma, targetWords]) => (
