@@ -5,7 +5,6 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
 });
 
 const prisma = new PrismaClient();
@@ -38,7 +37,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
     }
     messages.push({
       role: "user",
-      content: `Describe ${prompt} in 100 words or less`,
+      content: `Describe the term ${prompt} in 100 words or less`,
     });
 
     const response = await openai.chat.completions.create({

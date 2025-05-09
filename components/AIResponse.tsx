@@ -89,7 +89,7 @@ export function AIResponse({
               {" "}
               {/* Reduced size */}
               {tabooHit ? (
-                <>❌ Taboo word "{tabooWord}" was used!</>
+                <>❌ Taboo term "{tabooWord}" was used!</>
               ) : matchedWords.length > 0 ? (
                 <>
                   ✅ Matched {matchedWords.length} word
@@ -97,7 +97,7 @@ export function AIResponse({
                   {matchedWords.join(", ")}
                 </>
               ) : (
-                <>⚠️ No target words matched</>
+                <>⚠️ No target terms matched</>
               )}
             </h2>
             <button

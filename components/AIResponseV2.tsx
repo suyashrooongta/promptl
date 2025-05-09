@@ -102,7 +102,7 @@ export function AIResponse({
               {" "}
               {/* Reduced size */}
               {tabooHit ? (
-                <>❌ Matched taboo word "{tabooWord}"!</>
+                <>❌ Hit taboo term "{tabooWord}"!</>
               ) : matchedWords.length > 0 ? (
                 <>
                   ✅ Matched {matchedWords.length} word
@@ -110,7 +110,7 @@ export function AIResponse({
                   {matchedWords.join(", ")}
                 </>
               ) : (
-                <>⚠️ No target words matched</>
+                <>⚠️ No target terms hit</>
               )}
             </h2>
             <button
@@ -166,7 +166,7 @@ export function AIResponse({
                       .map(([word, response]) => (
                         <div key={word}>
                           <strong className="text-green-500">
-                            Target word: "{word}"
+                            Target term: "{word}"
                           </strong>
                           {highlightedResponse(
                             response,

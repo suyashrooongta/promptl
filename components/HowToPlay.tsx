@@ -39,7 +39,7 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
           <div className="space-y-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
               In Promptl, come up with prompts for AI, to make it say specific
-              target words while avoiding a taboo word.
+              target terms while avoiding a taboo term.
             </p>
 
             <div className="space-y-3">
@@ -47,7 +47,7 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  Find 5 target words while avoiding 1 taboo word
+                  Find 5 target terms while avoiding 1 taboo term
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
@@ -55,11 +55,11 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  You cannot use derivatives of target words
+                  You cannot use derivatives of target terms
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  You get penalized if AI uses the taboo word
+                  You get penalized if AI uses the taboo term
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
@@ -81,12 +81,13 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  -5 points for each wasted prompt, i.e., without a target word
+                  -5 points for each wasted prompt, i.e., without a target term
                   hit
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  +5 points for each extra word matched in a single prompt
+                  +5 points for each extra target term matched in a single
+                  prompt
                 </li>
               </ul>
             </div>

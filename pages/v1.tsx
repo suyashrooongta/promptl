@@ -160,7 +160,7 @@ export default function Home() {
 
     // Check for derivatives
     if (isDerivative(word, gameState.targetWords)) {
-      setError("Word cannot be a derivative of target words");
+      setError("Word cannot be a derivative of target terms");
       return;
     }
 
@@ -363,7 +363,7 @@ export default function Home() {
 
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                  Target Words:
+                  Target Terms:
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   {gameState.targetWords.map((word) => (
@@ -383,7 +383,7 @@ export default function Home() {
 
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                  Taboo Word:
+                  Taboo Term:
                 </h2>
                 <span className="px-4 py-2 rounded-xl font-medium bg-gradient-to-r from-red-400 to-red-500 text-white shadow-md">
                   {gameState.tabooWord}

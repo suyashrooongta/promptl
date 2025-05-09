@@ -38,13 +38,15 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
         <div className="p-6 overflow-y-auto h-[80%]">
           <div className="space-y-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
-              In Promptl, we prompt AI to describe some words. For instance, if
-              the word is "fish", the prompt for AI will be "Describe fish".
+              In Promptl, we prompt AI to describe some terms. For instance, if
+              the word is "fish", the prompt for AI will be "Describe the term
+              fish".
             </p>
             <p className="text-gray-700 leading-relaxed">
-              There are 5 target words and 1 taboo word that AI will be prompted
-              with. You have to guess a word appearing in the AI response. Your
-              goal is to hit the target words while avoiding the taboo word.
+              There are 5 target terms and 1 taboo terms that AI will be
+              prompted with. You have to guess a word appearing in the AI
+              response. Your goal is to hit the target terms while avoiding the
+              taboo term.
             </p>
 
             <div className="space-y-3">
@@ -52,8 +54,8 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  Guess words in AI responses for 5 target words while avoiding
-                  1 taboo word.
+                  Guess words in the AI responses for 5 target terms that do not
+                  appear in the AI response for the taboo term.
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
@@ -61,17 +63,17 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  Your guess cannot be a derivatives of target words.
+                  Your guess cannot be a derivatives of target terms.
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
-                  You get penalized if AI response for the taboo word contains
+                  You get penalized if AI response for the taboo term contains
                   your guess.
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
                   You get bonus points if AI response for more than one target
-                  word contains your guess.
+                  term contains your guess.
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-indigo-400 rounded-full"></span>
@@ -93,12 +95,12 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  -5 points for each wasted guess, i.e., without a target word.
+                  -5 points for each wasted guess, i.e., without a target hit.
                   hit
                 </li>
                 <li className="flex items-start">
                   <span className="w-2 h-2 mt-2 mr-2 bg-purple-400 rounded-full"></span>
-                  +5 points for each extra word hit in a single guess.
+                  +5 points for each extra target term hit in a single guess.
                 </li>
               </ul>
             </div>
