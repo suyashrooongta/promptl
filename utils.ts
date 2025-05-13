@@ -205,6 +205,17 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
     .then((res) => res.data.response as string);
 }
 
+export async function fetchAIResponseV2(prompt: string): Promise<string> {
+  if (prompt.startsWith("echo")) {
+    return prompt.replace("echo", "").trim();
+  }
+  return await axios
+    .get("/api/airesponsev2", {
+      params: { prompt },
+    })
+    .then((res) => res.data.response as string);
+}
+
 export async function checkAIResponse(
   prompt: string,
   targetWords: string[],

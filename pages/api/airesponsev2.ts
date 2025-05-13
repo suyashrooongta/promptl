@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 export async function fetchAIResponse(prompt: string): Promise<string> {
   try {
-    const existingResponse = await prisma.aiResponse.findUnique({
+    const existingResponse = await prisma.aiResponseRelatedWords.findUnique({
       where: {
         prompt: prompt,
       },
@@ -29,7 +29,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
       },
       {
         role: "user",
-        content: `Describe the term ${prompt} in 100 words or less`,
+        content: `Return 20 words most frequently associated with the term "${prompt}". It should be a list of words separated by commas. Words should be single words, and there should be no repeated words. Do not include the word "${prompt}" in the list. `,
       },
     ];
 
@@ -42,7 +42,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
 
     const aiResponse = response.choices[0].message.content || "";
     // Save the response to the database
-    await prisma.aiResponse.create({
+    await prisma.aiResponseRelatedWords.create({
       data: {
         prompt: prompt,
         response: aiResponse,

@@ -17,3 +17,8 @@ model AiResponse {
   prompt   String @id
   response String
 }
+
+model AiResponseRelatedWords {
+  prompt   String @id
+  response String
+}

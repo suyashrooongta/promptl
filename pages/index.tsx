@@ -14,7 +14,7 @@ import {
   MAX_PROMPTS_CONSTANT,
   isValidWord,
   isDerivative,
-  fetchAIResponse,
+  fetchAIResponseV2,
   loadGameState,
   saveGameState,
   BASE_SCORE_CONSTANT,
@@ -107,11 +107,11 @@ export default function Home() {
           try {
             const targetResponses = await Promise.all(
               gameState.targetWords.map((word) =>
-                retryFetch(() => fetchAIResponse(word))
+                retryFetch(() => fetchAIResponseV2(word))
               )
             );
             const tabooResponse = await retryFetch(() =>
-              fetchAIResponse(gameState.tabooWord)
+              fetchAIResponseV2(gameState.tabooWord)
             );
             const targetWordResponses = Object.fromEntries(
               gameState.targetWords.map((word, i) => [word, targetResponses[i]])
@@ -416,7 +416,7 @@ export default function Home() {
 
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                  Target Terms:
+                  Target Terms
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   {gameState.targetWords.map((word) => (
@@ -436,7 +436,7 @@ export default function Home() {
 
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                  Taboo Term:
+                  Taboo Term
                 </h2>
                 <span className="px-4 py-2 rounded-xl font-medium bg-gradient-to-r from-red-400 to-red-500 text-white shadow-md">
                   {gameState.tabooWord}
@@ -445,16 +445,13 @@ export default function Home() {
 
               <form onSubmit={handleSubmit} className="mb-8">
                 <div className="space-y-3">
-                  <div className="text-gray-800 font-semibold font-large">
-                    Describe
-                  </div>
-                  <div className="flex gap-2 sm:gap-2">
+                  <div className="flex gap-2 sm:gap-2 mt-6">
                     <input
                       ref={inputRef}
                       type="text"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="prompt word"
+                      placeholder="guess word"
                       className="flex-1 px-4 py-3 border-2 border-indigo-100 rounded-xl text-gray-800 focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 transition-all"
                       disabled={gameState.isGameOver || isLoading}
                     />
@@ -462,7 +459,11 @@ export default function Home() {
                       type="submit"
                       className="flex-shrink-0 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2 shadow-md"
                       disabled={
-                        !prompt.trim() || gameState.isGameOver || isLoading
+                        !prompt.trim() ||
+                        gameState.isGameOver ||
+                        isLoading ||
+                        !gameState.targetWordResponses ||
+                        !gameState.tabooWordResponse
                       }
                     >
                       {isLoading ? (
