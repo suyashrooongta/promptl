@@ -15,7 +15,7 @@ type RequestBody = {
 
 type ResponseData = {
   matchedWords: string[];
-  matchedWordIndices: number[];
+  matchedWordIndices: { [key: string]: number[] };
   tabooWordIndices: number[];
 };
 
