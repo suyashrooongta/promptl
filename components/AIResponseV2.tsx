@@ -105,7 +105,7 @@ export function AIResponse({
               {" "}
               {/* Reduced size */}
               {selectedTerm ? (
-                <>✅ Matched term: "{selectedTerm}"</>
+                <>✅ Input: "{input}"</>
               ) : tabooHit ? (
                 <>❌ Hit taboo term "{tabooWord}"!</>
               ) : matchedWords.length > 0 ? (

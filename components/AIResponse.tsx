@@ -93,7 +93,7 @@ export function AIResponse({
               {" "}
               {/* Reduced size */}
               {selectedTerm ? (
-                <>✅ Matched term: "{selectedTerm}"</>
+                <>✅ Prompt: "Describe {prompt}"</>
               ) : tabooHit ? (
                 <>❌ Taboo term "{tabooWord}" was used!</>
               ) : matchedWords.length > 0 ? (
@@ -131,12 +131,16 @@ export function AIResponse({
           )}
         </div>
         <div className="p-6 space-y-6 overflow-y-auto h-[80%]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Prompt
-          </h3>
-          <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
-            Describe {prompt}
-          </p>
+          {!selectedTerm && (
+            <>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Your Prompt
+              </h3>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                Describe {prompt}
+              </p>
+            </>
+          )}
           <div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               AI Response
