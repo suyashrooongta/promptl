@@ -13,6 +13,7 @@ interface AIResponseProps {
   tabooWordResponse: string;
   targetWordResponses: { [key: string]: string };
   onClose: () => void;
+  selectedTerm: string | null;
 }
 
 export function AIResponse({
@@ -25,6 +26,7 @@ export function AIResponse({
   tabooWordResponse,
   targetWordResponses,
   onClose,
+  selectedTerm,
 }: AIResponseProps) {
   const [loading, setLoading] = useState(false);
 
@@ -47,6 +49,7 @@ export function AIResponse({
   }, []);
 
   const tabooHit = tabooWordIndices?.length > 0;
+  bonusPoints = selectedTerm ? 0 : bonusPoints;
 
   const highlightMarkdown = (
     markdown: string,
@@ -101,11 +104,13 @@ export function AIResponse({
             <h2 className="text-lg font-bold text-white">
               {" "}
               {/* Reduced size */}
-              {tabooHit ? (
+              {selectedTerm ? (
+                <>✅ Matched term: "{selectedTerm}"</>
+              ) : tabooHit ? (
                 <>❌ Hit taboo term "{tabooWord}"!</>
               ) : matchedWords.length > 0 ? (
                 <>
-                  ✅ Matched {matchedWords.length} word
+                  ✅ Matched {matchedWords.length} term
                   {matchedWords.length > 1 ? "s" : ""}:{" "}
                   {matchedWords.join(", ")}
                 </>
@@ -126,26 +131,29 @@ export function AIResponse({
             <div className="text-indigo-200 font-semibold animate-bounce text-xl mt-2">
               {" "}
               {/* Increased size */}
-              🎉 Bonus points: +{bonusPoints}!
             </div>
           )}
-          {tabooHit && (
+          {tabooHit ? (
             <div className="text-red-200 font-semibold animate-bounce text-xl mt-2">
               {" "}
               {/* Increased size */}
               😢 -{PENALTY_PER_TABOO_HIT_CONSTANT} points!
             </div>
-          )}
+          ) : null}
         </div>
         <div className="p-6 space-y-6 overflow-y-auto h-[80%]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Your Guess
-          </h3>
-          <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{input}</p>
+          {!selectedTerm && (
+            <>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                Your Guess
+              </h3>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{input}</p>
+            </>
+          )}
           {(tabooHit || matchedWords.length > 0) && (
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                AI Responses
+                AI Response
               </h3>
               <div className="text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed space-y-4">
                 {tabooHit
@@ -162,7 +170,11 @@ export function AIResponse({
                       </div>
                     )
                   : Object.entries(targetWordResponses)
-                      .filter(([word]) => matchedWords.includes(word))
+                      .filter(([word]) =>
+                        selectedTerm
+                          ? word === selectedTerm
+                          : matchedWords.includes(word)
+                      )
                       .map(([word, response]) => (
                         <div key={word}>
                           <strong className="text-green-500">

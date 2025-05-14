@@ -7,11 +7,12 @@ interface AIResponseProps {
   prompt: string;
   response: string;
   matchedWords: string[];
-  matchedWordIndices: number[];
+  matchedWordIndices: { [key: string]: number[] };
   tabooWord: string;
   tabooWordIndices: number[];
   bonusPoints: number;
   onClose: () => void;
+  selectedTerm: string | null;
 }
 
 export function AIResponse({
@@ -23,6 +24,7 @@ export function AIResponse({
   tabooWordIndices,
   bonusPoints,
   onClose,
+  selectedTerm,
 }: AIResponseProps) {
   const [loading, setLoading] = useState(false);
 
@@ -44,11 +46,12 @@ export function AIResponse({
     };
   }, []);
 
-  // Split response into words and highlight matches
-  console.log("matchedWordIndices", matchedWordIndices);
-
   const highlightMarkdown = (markdown: string) => {
     let processedMarkdown = markdown;
+
+    const matchedIndices = selectedTerm
+      ? matchedWordIndices[selectedTerm] || []
+      : Object.values(matchedWordIndices).flat();
 
     // Split into words and punctuation while preserving them
     const markdownWords = markdown.split(/(\W+)/); // Matches non-word characters (punctuation, spaces, etc.)
@@ -62,7 +65,7 @@ export function AIResponse({
         return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
       }
 
-      if (matchedWordIndices.includes(currentIndex)) {
+      if (matchedIndices.includes(currentIndex)) {
         return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
       }
 
@@ -79,6 +82,7 @@ export function AIResponse({
   );
 
   const tabooHit = tabooWordIndices?.length > 0;
+  bonusPoints = selectedTerm ? 0 : bonusPoints;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -88,11 +92,13 @@ export function AIResponse({
             <h2 className="text-lg font-bold text-white">
               {" "}
               {/* Reduced size */}
-              {tabooHit ? (
+              {selectedTerm ? (
+                <>✅ Matched term: "{selectedTerm}"</>
+              ) : tabooHit ? (
                 <>❌ Taboo term "{tabooWord}" was used!</>
               ) : matchedWords.length > 0 ? (
                 <>
-                  ✅ Matched {matchedWords.length} word
+                  ✅ Matched {matchedWords.length} term
                   {matchedWords.length > 1 ? "s" : ""}:{" "}
                   {matchedWords.join(", ")}
                 </>

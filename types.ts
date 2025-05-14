@@ -9,7 +9,7 @@ export interface GameState {
   score: number;
   aiResponses: { [key: string]: string };
   matchedWords: { [key: string]: string[] };
-  matchedWordIndices: { [key: string]: number[] };
+  matchedWordIndices: { [key: string]: { [key: string]: number[] } };
   bonusPoints: { [key: string]: number };
   tabooWordIndices: { [key: string]: number[] };
   targetWordResponses?: { [key: string]: string }; // Optional property for target word responses as strings
@@ -40,5 +40,5 @@ export interface AIResponse {
   matchedWords: string[];
   tabooWordIndices: number[]; // Changed from tabooWordIndex to tabooWordIndices
   bonusPoints: number;
-  matchedWordIndices: number[];
+  matchedWordIndices: { [key: string]: number[] };
 }

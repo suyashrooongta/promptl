@@ -260,13 +260,13 @@ export function processAIResponse(
   easyMode: boolean
 ): {
   matchedWords: string[];
-  matchedWordIndices: number[];
+  matchedWordIndices: { [key: string]: number[] };
   tabooWordIndices: number[]; // Updated to return all indices
 } {
   // Split response into words using a regex to match non-alphanumeric characters
   const words = aiResponse.split(/\W+/).filter(Boolean); // Filter out empty strings
   const matchedWords: string[] = [];
-  const matchedWordIndices: number[] = [];
+  const matchedWordIndices: { [key: string]: number[] } = {};
   const targetWordLemmasMap = preprocessTargetWords(targetWords);
   const tabooWordIndices: number[] = []; // Collect all taboo word indices
 
@@ -386,7 +386,7 @@ export function processWord(
   targetWordLemmasMap: Map<string, Set<string>>, // Updated to use Set<string>
   easyMode: boolean,
   matchedWords: string[],
-  matchedWordIndices: number[],
+  matchedWordIndices: { [key: string]: number[] },
   index: number
 ): boolean {
   if (
@@ -421,13 +421,16 @@ export function processWord(
 export function addMatch(
   matchedWords: string[],
   target: string,
-  matchedWordIndices: number[],
+  matchedWordIndices: { [key: string]: number[] },
   index: number
 ) {
   if (!matchedWords.includes(target)) {
     matchedWords.push(target);
   }
-  matchedWordIndices.push(index);
+  if (!matchedWordIndices[target]) {
+    matchedWordIndices[target] = []; // Initialize array for this target word
+  }
+  matchedWordIndices[target].push(index);
 }
 
 export function checkWordInAIResponses(

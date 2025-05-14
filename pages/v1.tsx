@@ -55,6 +55,7 @@ export default function Home() {
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAIResponse, setShowAIResponse] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showStartScreen, setShowStartScreen] = useState(true); // New state for start screen
@@ -235,6 +236,15 @@ export default function Home() {
     }
   };
 
+  const handleTermClick = (term: string) => {
+    setSelectedTerm(term);
+    const prompt = Object.keys(gameState.matchedWords).find((key) =>
+      gameState.matchedWords[key]?.includes(term)
+    );
+    setSelectedPrompt(prompt || null);
+    setShowAIResponse(true);
+  };
+
   const handlePromptClick = (prompt: string) => {
     setSelectedPrompt(prompt);
     setShowAIResponse(true);
@@ -365,18 +375,24 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-3 text-gray-800">
                   Target Terms
                 </h2>
+
                 <div className="flex flex-wrap gap-3">
                   {gameState.targetWords.map((word) => (
-                    <span
+                    <button
                       key={word}
-                      className={`px-4 py-2 rounded-xl font-medium transition-all transform hover:scale-105 ${
+                      onClick={() =>
+                        gameState.solvedWords.includes(word) &&
+                        handleTermClick(word)
+                      }
+                      className={`px-4 py-2 rounded-xl font-medium transition-all transform ${
                         gameState.solvedWords.includes(word)
-                          ? "bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md"
-                          : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow"
+                          ? "hover:scale-105 bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md"
+                          : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 shadow cursor-default"
                       }`}
+                      disabled={!gameState.solvedWords.includes(word)}
                     >
                       {word}
-                    </span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -487,7 +503,9 @@ export default function Home() {
               onClose={() => {
                 setShowAIResponse(false);
                 setSelectedPrompt(null);
+                setSelectedTerm(null);
               }}
+              selectedTerm={selectedTerm}
             />
           )}
         </div>
