@@ -14,7 +14,7 @@ import {
   MAX_PROMPTS_CONSTANT,
   isValidWord,
   isDerivative,
-  fetchAIResponseV2,
+  fetchAIResponse,
   loadGameState,
   saveGameState,
   BASE_SCORE_CONSTANT,
@@ -108,11 +108,11 @@ export default function Home() {
           try {
             const targetResponses = await Promise.all(
               gameState.targetWords.map((word) =>
-                retryFetch(() => fetchAIResponseV2(word))
+                retryFetch(() => fetchAIResponse(word))
               )
             );
             const tabooResponse = await retryFetch(() =>
-              fetchAIResponseV2(gameState.tabooWord)
+              fetchAIResponse(gameState.tabooWord)
             );
             const targetWordResponses = Object.fromEntries(
               gameState.targetWords.map((word, i) => [word, targetResponses[i]])
