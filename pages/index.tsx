@@ -90,57 +90,68 @@ export default function Home() {
         }
       } else {
         clearTimeLeft(GAME_VARIANT);
-        // Fetch AI responses for target and taboo terms
-        const fetchAIResponses = async () => {
-          const retryFetch = async (
-            fetchFn: () => Promise<any>,
-            retries = 3
-          ): Promise<any> => {
-            for (let attempt = 1; attempt <= retries; attempt++) {
-              try {
-                return await fetchFn();
-              } catch (err) {
-                if (attempt === retries) throw err;
-              }
+      }
+
+      // Fetch AI responses for target and taboo terms
+      const fetchAIResponses = async () => {
+        const retryFetch = async (
+          fetchFn: () => Promise<any>,
+          retries = 3
+        ): Promise<any> => {
+          for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+              return await fetchFn();
+            } catch (err) {
+              if (attempt === retries) throw err;
             }
-          };
-
-          try {
-            const targetResponses = await Promise.all(
-              gameState.targetWords.map((word) =>
-                retryFetch(() => fetchAIResponse(word))
-              )
-            );
-            const tabooResponse = await retryFetch(() =>
-              fetchAIResponse(gameState.tabooWord)
-            );
-            const targetWordResponses = Object.fromEntries(
-              gameState.targetWords.map((word, i) => [word, targetResponses[i]])
-            );
-            const frequentLemmas = getMostFrequentLemmas(
-              tabooResponse || "",
-              targetWordResponses
-            );
-
-            setGameState((prev) => ({
-              ...prev,
-              targetWordResponses,
-              tabooWordResponse: tabooResponse,
-              frequentLemmas,
-            }));
-          } catch (err) {
-            console.error(
-              "Failed to fetch AI responses for target/taboo words after retries:",
-              err
-            );
-            setError(
-              "Failed to fetch AI responses. Please refresh and try again."
-            );
           }
         };
 
-        fetchAIResponses();
-      }
+        try {
+          const targetResponses = await Promise.all(
+            gameState.targetWords.map((word) =>
+              retryFetch(() => fetchAIResponse(word))
+            )
+          );
+          const tabooResponse = await retryFetch(() =>
+            fetchAIResponse(gameState.tabooWord)
+          );
+          const targetWordResponses = Object.fromEntries(
+            gameState.targetWords.map((word, i) => [word, targetResponses[i]])
+          );
+          const frequentLemmas = getMostFrequentLemmas(
+            tabooResponse || "",
+            targetWordResponses
+          );
+
+          // After current day's responses, preload next day's responses (not saved)
+          const nextDayData = getGameData(startOfTomorrow(), GAME_VARIANT);
+          Promise.all([
+            ...nextDayData.targetWords.map((word) => fetchAIResponse(word)),
+            fetchAIResponse(nextDayData.tabooWord),
+          ]).catch((err) => {
+            // Ignore errors for preloading
+            console.warn("Failed to preload next day's AI responses:", err);
+          });
+
+          setGameState((prev) => ({
+            ...prev,
+            targetWordResponses,
+            tabooWordResponse: tabooResponse,
+            frequentLemmas,
+          }));
+        } catch (err) {
+          console.error(
+            "Failed to fetch AI responses for target/taboo words after retries:",
+            err
+          );
+          setError(
+            "Failed to fetch AI responses. Please refresh and try again."
+          );
+        }
+      };
+
+      fetchAIResponses();
       setShowStartScreen(true); // Always show the start screen
     }
   }, [isClient]);
@@ -530,7 +541,6 @@ export default function Home() {
               </p>
             </footer>
           </div>
-
           {showStats && (
             <Stats
               stats={getStats(GAME_VARIANT)}
@@ -541,9 +551,7 @@ export default function Home() {
               variant={GAME_VARIANT}
             />
           )}
-
           {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
-
           {!showStats && showAIResponse && selectedPrompt && (
             <AIResponse
               input={selectedPrompt}
@@ -560,6 +568,7 @@ export default function Home() {
                 setSelectedTerm(null);
               }}
               selectedTerm={selectedTerm}
+              // previousDayAIResponses={gameState.previousDayAIResponses}
             />
           )}
         </div>
