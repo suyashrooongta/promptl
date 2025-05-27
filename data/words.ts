@@ -832,7 +832,6 @@ export const allTargetWordsV2 = [
   "finger",
   "finish",
   "fire",
-  "fish",
   "fishing",
   "fix",
   "flight",

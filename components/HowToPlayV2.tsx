@@ -38,15 +38,40 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
         <div className="p-6 overflow-y-auto h-[80%]">
           <div className="space-y-6 mb-8">
             <p className="text-gray-700 leading-relaxed">
-              In Promptl, we prompt AI to describe some terms. For instance, if
-              the word is "fish", the prompt for AI will be "Describe the term
-              fish".
+              In Promptl, we prompt AI to describe some terms. Say the term is{" "}
+              <b>fish</b>.
+            </p>
+
+            <strong className="text-blue-500">AI prompt</strong>
+            <p className="text-gray-700 leading-relaxed italic">
+              Describe the term fish in 100 words or less.
+            </p>
+            <strong className="text-blue-500">AI response</strong>
+            <p className="text-gray-700 leading-relaxed italic">
+              A fish is a cold-blooded vertebrate animal that lives in water,
+              has gills, fins, and a streamlined body. They are typically
+              covered with scales and lay eggs. Fish are an important part of
+              the aquatic ecosystem and are a source of food for many animals,
+              including humans. They come in a wide variety of shapes, sizes,
+              and colors, and can be found in oceans, rivers, lakes, and ponds.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              You have to guess a word appearing in the AI response. For
+              instance,{" "}
+              <b>
+                <i>water</i>
+              </b>{" "}
+              or{" "}
+              <b>
+                <i>fins</i>
+              </b>{" "}
+              in the example above.
             </p>
             <p className="text-gray-700 leading-relaxed">
               There are 5 target terms and 1 taboo terms that AI will be
-              prompted with. You have to guess a word appearing in the AI
-              response. Your goal is to hit the target terms while avoiding the
-              taboo term.
+              prompted with. Your goal is to guess words in the AI responses for
+              5 target terms that do not appear in the AI response for the taboo
+              term.
             </p>
 
             <div className="space-y-3">

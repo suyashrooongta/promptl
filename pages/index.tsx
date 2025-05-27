@@ -338,6 +338,15 @@ export default function Home() {
                   : "View result"}
               </button>
             )}
+            {gameStatus !== GameStatus.GAME_OVER && (
+              <button
+                onClick={() => setShowHowTo(true)}
+                className="px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-indigo-700 rounded-xl hover:from-indigo-100 hover:to-purple-100 transition-all transform hover:scale-105 shadow-md flex items-center justify-center gap-2"
+              >
+                <HelpCircle className="w-5 h-5" />
+                How to Play
+              </button>
+            )}
             {isClient &&
               gameStatus === GameStatus.GAME_OVER &&
               timeUntilNextGame !== null && (
@@ -553,7 +562,6 @@ export default function Home() {
               variant={GAME_VARIANT}
             />
           )}
-          {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
           {!showStats && showAIResponse && selectedPrompt && (
             <AIResponse
               input={selectedPrompt}
@@ -575,6 +583,8 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </>
   );
 }
