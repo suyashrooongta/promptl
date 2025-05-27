@@ -59,26 +59,62 @@ export function AIResponse({
     let processedMarkdown = markdown;
 
     // Split into words and punctuation while preserving them
-    const markdownWords = markdown.split(/(\W+)/); // Matches non-word characters (punctuation, spaces, etc.)
+    const markdownWords = markdown.split(/(\W+)/);
 
-    let wordIndex = 0; // Track non-whitespace word index
-    const highlightedWords = markdownWords.map((word) => {
-      if (!/\w/.test(word)) return word; // Skip non-word characters (punctuation, spaces)
-
-      const currentIndex = wordIndex++;
-      if (matchedWordIndices.includes(currentIndex)) {
-        if (taboo) {
-          return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
-        } else if (matchedWordIndices.includes(currentIndex)) {
-          return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
+    if (taboo) {
+      // For each matched word, show it and two words on either side, blur the rest
+      const visible = new Array(markdownWords.length).fill(false);
+      let wordIndices = [];
+      // Map from markdownWords index to word index (skip punctuation)
+      let wordIdx = 0;
+      for (let i = 0; i < markdownWords.length; i++) {
+        if (/\w/.test(markdownWords[i])) {
+          wordIndices.push(i);
+          wordIdx++;
         }
       }
+      // Mark visible indices
+      matchedWordIndices.forEach((matchedWordIdx) => {
+        // Find the corresponding index in markdownWords
+        const idx = wordIndices[matchedWordIdx];
+        if (idx !== undefined) {
+          for (let offset = -2; offset <= 2; offset++) {
+            const showIdx = wordIndices[matchedWordIdx + offset];
+            if (showIdx !== undefined) visible[showIdx] = true;
+          }
+        }
+      });
+      // Highlight and blur accordingly
+      let currWordIdx = 0;
+      const highlightedWords = markdownWords.map((word, i) => {
+        const isVisible = visible[i];
+        const isMatched = matchedWordIndices.includes(currWordIdx);
+        const isAWord = /\w/.test(word);
+        if (isAWord) currWordIdx++;
+        if (isMatched && isAWord) {
+          return `<span class="bg-red-200 px-1 rounded">${word}</span>`;
+        } else if (isVisible) {
+          return word;
+        } else {
+          return `<span class="text-gray-600 blur-sm select-none">${word}</span>`;
+        }
+      });
+      processedMarkdown = highlightedWords.join("");
+      return marked(processedMarkdown);
+    }
 
+    // Normal highlighting for non-taboo
+    let wordIndex = 0;
+    const highlightedWords = markdownWords.map((word) => {
+      if (!/\w/.test(word)) return word;
+      const currentIndex = wordIndex++;
+      if (matchedWordIndices.includes(currentIndex)) {
+        return `<span class="bg-green-200 px-1 rounded">${word}</span>`;
+      }
       return word;
     });
 
     processedMarkdown = highlightedWords.join("");
-
     return marked(processedMarkdown);
   };
 

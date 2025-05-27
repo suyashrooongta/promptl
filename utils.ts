@@ -404,10 +404,10 @@ export function processWord(
       }
       return;
     }
-    // if (cleanWord.slice(0, 5) === cleanTarget.slice(0, 5)) {
-    //   addMatch(matchedWords, target, matchedWordIndices, index);
-    //   return;
-    // }
+    if (cleanWord.slice(0, 6) === cleanTarget.slice(0, 6)) {
+      addMatch(matchedWords, target, matchedWordIndices, index);
+      return;
+    }
     const targetLemmas = targetWordLemmasMap.get(target) || new Set();
     if ([...wordLemmas].some((lemma) => targetLemmas.has(lemma))) {
       // Updated to check Set intersection

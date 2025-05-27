@@ -76,84 +76,86 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
-      const savedState = loadGameState(GAME_VARIANT);
-      let gameOver = false;
-      if (savedState) {
-        setGameState(savedState);
-        if (savedState.isGameOver) {
-          gameOver = true;
-          setShowStats(true);
-          setGameStatus(GameStatus.GAME_OVER);
-        } else {
-          setGameStatus(GameStatus.GAME_IN_PROGRESS);
-        }
+    if (!isClient) {
+      return; // Skip if not client-side
+    }
+    const savedState = loadGameState(GAME_VARIANT);
+    let gameOver = false;
+    if (savedState) {
+      setGameState(savedState);
+      if (savedState.isGameOver) {
+        gameOver = true;
+        setShowStats(true);
+        setGameStatus(GameStatus.GAME_OVER);
       } else {
-        clearTimeLeft(GAME_VARIANT);
+        setGameStatus(GameStatus.GAME_IN_PROGRESS);
       }
+    } else {
+      clearTimeLeft(GAME_VARIANT);
+    }
 
-      // Fetch AI responses for target and taboo terms
-      const fetchAIResponses = async () => {
-        const retryFetch = async (
-          fetchFn: () => Promise<any>,
-          retries = 3
-        ): Promise<any> => {
-          for (let attempt = 1; attempt <= retries; attempt++) {
-            try {
-              return await fetchFn();
-            } catch (err) {
-              if (attempt === retries) throw err;
-            }
+    // Fetch AI responses for target and taboo terms
+    const fetchAIResponses = async () => {
+      const retryFetch = async (
+        fetchFn: () => Promise<any>,
+        retries = 3
+      ): Promise<any> => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            return await fetchFn();
+          } catch (err) {
+            if (attempt === retries) throw err;
           }
-        };
-
-        try {
-          const targetResponses = await Promise.all(
-            gameState.targetWords.map((word) =>
-              retryFetch(() => fetchAIResponse(word))
-            )
-          );
-          const tabooResponse = await retryFetch(() =>
-            fetchAIResponse(gameState.tabooWord)
-          );
-          const targetWordResponses = Object.fromEntries(
-            gameState.targetWords.map((word, i) => [word, targetResponses[i]])
-          );
-          const frequentLemmas = getMostFrequentLemmas(
-            tabooResponse || "",
-            targetWordResponses
-          );
-
-          // After current day's responses, preload next day's responses (not saved)
-          const nextDayData = getGameData(startOfTomorrow(), GAME_VARIANT);
-          Promise.all([
-            ...nextDayData.targetWords.map((word) => fetchAIResponse(word)),
-            fetchAIResponse(nextDayData.tabooWord),
-          ]).catch((err) => {
-            // Ignore errors for preloading
-            console.warn("Failed to preload next day's AI responses:", err);
-          });
-
-          setGameState((prev) => ({
-            ...prev,
-            targetWordResponses,
-            tabooWordResponse: tabooResponse,
-            frequentLemmas,
-          }));
-        } catch (err) {
-          console.error(
-            "Failed to fetch AI responses for target/taboo words after retries:",
-            err
-          );
-          setError(
-            "Failed to fetch AI responses. Please refresh and try again."
-          );
         }
       };
 
+      try {
+        const targetResponses = await Promise.all(
+          gameState.targetWords.map((word) =>
+            retryFetch(() => fetchAIResponse(word))
+          )
+        );
+        const tabooResponse = await retryFetch(() =>
+          fetchAIResponse(gameState.tabooWord)
+        );
+        const targetWordResponses = Object.fromEntries(
+          gameState.targetWords.map((word, i) => [word, targetResponses[i]])
+        );
+        const frequentLemmas = getMostFrequentLemmas(
+          tabooResponse || "",
+          targetWordResponses
+        );
+
+        // After current day's responses, preload next day's responses (not saved)
+        const nextDayData = getGameData(startOfTomorrow(), GAME_VARIANT);
+        Promise.all([
+          ...nextDayData.targetWords.map((word) => fetchAIResponse(word)),
+          fetchAIResponse(nextDayData.tabooWord),
+        ]).catch((err) => {
+          // Ignore errors for preloading
+          console.warn("Failed to preload next day's AI responses:", err);
+        });
+
+        setGameState((prev) => ({
+          ...prev,
+          targetWordResponses,
+          tabooWordResponse: tabooResponse,
+          frequentLemmas,
+        }));
+      } catch (err) {
+        console.error(
+          "Failed to fetch AI responses for target/taboo words after retries:",
+          err
+        );
+        setError("Failed to fetch AI responses. Please refresh and try again.");
+      }
+    };
+
+    if (!savedState?.targetWordResponses || !savedState?.tabooWordResponse) {
+      console.log("Fetching AI responses for target and taboo words...");
       fetchAIResponses();
-      setShowStartScreen(true); // Always show the start screen
     }
+    setShowStartScreen(true); // Always show the start screen
   }, [isClient]);
 
   useEffect(() => {
