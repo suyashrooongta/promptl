@@ -555,6 +555,7 @@ export function getMostFrequentLemmas(
     "includes",
     "diverse",
     "multiple",
+    "ranging",
   ]);
 
   // Process taboo response
