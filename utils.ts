@@ -556,6 +556,13 @@ export function getMostFrequentLemmas(
     "diverse",
     "multiple",
     "ranging",
+    "mean",
+    "means",
+    "overall",
+    "serve",
+    "serves",
+    "leading",
+    "concepts",
   ]);
 
   // Process taboo response
