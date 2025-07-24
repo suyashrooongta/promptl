@@ -25,7 +25,7 @@ export async function fetchAIResponse(prompt: string): Promise<string> {
       {
         role: "system",
         content:
-          "You are a helpful assistant. Your task is to provide concise and accurate descriptions of terms. Please respond in a clear and informative manner. Do not autocorrect the prompt.",
+          "You are a helpful assistant. Your task is to provide concise and accurate descriptions of terms. If there are multiple meanings of a term, prefer the most commonly used meaning rather than a domain specific meaning. Do not autocorrect the prompt.",
       },
       {
         role: "user",
