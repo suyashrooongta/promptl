@@ -541,6 +541,7 @@ export function getMostFrequentLemmas(
     "vary",
     "commonly",
     "involves",
+    "involve",
     "denote",
     "context",
     "type",
@@ -563,6 +564,8 @@ export function getMostFrequentLemmas(
     "serves",
     "leading",
     "concepts",
+    "something",
+    "specific",
   ]);
 
   // Process taboo response
